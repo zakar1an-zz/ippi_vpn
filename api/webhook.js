@@ -19,6 +19,38 @@ async function telegram(method, payload) {
   return data;
 }
 
+async function saveUser(user) {
+  const url = process.env.SUPABASE_URL;
+  const key = process.env.SUPABASE_SECRET_KEY;
+
+  if (!url || !key) {
+    throw new Error("Supabase environment variables missing");
+  }
+
+  const response = await fetch(
+    `${url}/rest/v1/users?on_conflict=telegram_id`,
+    {
+      method: "POST",
+      headers: {
+        apikey: key,
+        Authorization: `Bearer ${key}`,
+        "Content-Type": "application/json",
+        Prefer: "resolution=merge-duplicates,return=minimal"
+      },
+      body: JSON.stringify({
+        telegram_id: user.id,
+        username: user.username || null,
+        first_name: user.first_name || null
+      })
+    }
+  );
+
+  if (!response.ok) {
+    const error = await response.text();
+    throw new Error(`Supabase error: ${error}`);
+  }
+}
+
 const keyboard = {
   inline_keyboard: [
     [{
@@ -49,6 +81,10 @@ module.exports = async (req, res) => {
       const command = (update.message.text || "").split(" ")[0];
 
       if (command === "/start") {
+        if (update.message.from) {
+          await saveUser(update.message.from);
+        }
+
         await telegram("sendMessage", {
           chat_id: chatId,
           text:
