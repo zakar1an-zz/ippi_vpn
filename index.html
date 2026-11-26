@@ -132,9 +132,7 @@ async function demoPay() {
   }
 
   try {
-    if (tg.MainButton) {
-      tg.MainButton.showProgress();
-    }
+    if (tg.MainButton) tg.MainButton.showProgress();
 
     const response = await fetch('/api/create-order', {
       method: 'POST',
@@ -148,22 +146,20 @@ async function demoPay() {
     const data = await response.json();
 
     if (!response.ok) {
-      throw new Error(data.error || 'Ошибка создания заказа');
+      throw new Error(data.error || 'Ошибка создания платежа');
     }
 
-    const message = 'Заказ создан! Тариф: ' + plan.name +
-      '. Сумма: ' + data.amount + ' ₽. Оплата пока не подключена.';
+    if (!data.confirmationUrl) {
+      throw new Error('Ссылка на оплату не получена');
+    }
 
-    if (tg.showAlert) tg.showAlert(message);
-    else alert(message);
+    tg.openLink(data.confirmationUrl);
 
   } catch (error) {
     if (tg.showAlert) tg.showAlert(error.message);
     else alert(error.message);
   } finally {
-    if (tg.MainButton) {
-      tg.MainButton.hideProgress();
-    }
+    if (tg.MainButton) tg.MainButton.hideProgress();
   }
 }
 
