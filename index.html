@@ -3,657 +3,392 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <meta name="theme-color" content="#09090d" />
+  <meta name="theme-color" content="#050b16" />
   <title>ippi VPN</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <style>
+    :root {
+      --bg: #050b16;
+      --panel: #0c1628;
+      --panel2: #111f35;
+      --line: rgba(104, 174, 255, .13);
+      --muted: #8295b4;
+      --text: #f2f7ff;
+      --blue: #28aaff;
+      --blue2: #0879d9;
+      --green: #42d9a0;
+    }
 
-:root {
-  --bg: #050b16;
-  --panel: #0c1628;
-  --panel2: #111f35;
-  --line: rgba(104, 174, 255, .13);
-  --muted: #8295b4;
-  --text: #f2f7ff;
-  --purple: #28aaff;
-  --purple2: #0879d9;
-  --green: #42d9a0;
-}
+    * { box-sizing: border-box; }
 
-* {
-  box-sizing: border-box;
-}
+    body {
+      margin: 0;
+      background:
+        radial-gradient(ellipse at 50% -15%, rgba(0, 132, 255, .20), transparent 48%),
+        var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      padding: 0 16px calc(115px + env(safe-area-inset-bottom));
+    }
 
-body {
-  margin: 0;
-  background:
-    radial-gradient(ellipse at 50% -15%, rgba(0, 132, 255, .20), transparent 48%),
-    var(--bg);
-  color: var(--text);
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  padding: 0 16px calc(115px + env(safe-area-inset-bottom));
-}
+    button { font: inherit; color: inherit; border: 0; cursor: pointer; }
 
-button {
-  font: inherit;
-  color: inherit;
-  border: 0;
-  cursor: pointer;
-}
+    .app {
+      max-width: 520px;
+      margin: 0 auto;
+      padding-top: calc(env(safe-area-inset-top) + 18px);
+    }
 
-.app {
-  max-width: 520px;
-  margin: 0 auto;
-  padding-top: calc(env(safe-area-inset-top) + 18px);
-}
+    .top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 25px;
+    }
 
-.top {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 25px;
-}
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 800;
+      font-size: 22px;
+      letter-spacing: -.8px;
+      color: #f2f7ff;
+    }
 
-.brand {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  font-weight: 800;
-  font-size: 22px;
-  letter-spacing: -.8px;
-  color: #f2f7ff;
-}
+    .brand-vpn { color: #f2f7ff; }
 
-.logo {
-  width: 38px;
-  height: 38px;
-  border-radius: 13px;
-  background: linear-gradient(145deg, #38baff, #0755bb);
-  display: grid;
-  place-items: center;
-  box-shadow: 0 5px 25px #168fff55;
-  font-size: 19px;
-}
+    .logo {
+      width: 38px;
+      height: 38px;
+      border-radius: 13px;
+      background: linear-gradient(145deg, #38baff, #0755bb);
+      display: grid;
+      place-items: center;
+      box-shadow: 0 5px 25px #168fff55;
+      font-size: 19px;
+    }
 
-.profile {
-  width: 38px;
-  height: 38px;
-  border-radius: 50%;
-  background: #14243c;
-  border: 1px solid var(--line);
-  display: grid;
-  place-items: center;
-  color: #8ccaff;
-  font-weight: 700;
-}
+    .profile {
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      background: #14243c;
+      border: 1px solid var(--line);
+      display: grid;
+      place-items: center;
+      color: #8ccaff;
+      font-weight: 700;
+    }
 
-.eyebrow {
-  font-size: 12px;
-  color: var(--muted);
-  letter-spacing: 1.4px;
-  text-transform: uppercase;
-  margin: 0 0 8px;
-}
+    .eyebrow {
+      font-size: 12px;
+      color: var(--muted);
+      letter-spacing: 1.4px;
+      text-transform: uppercase;
+      margin: 0 0 8px;
+    }
 
-.heading {
-  font-size: 28px;
-  font-weight: 800;
-  letter-spacing: -1px;
-  margin: 0 0 5px;
-}
+    .heading {
+      font-size: 28px;
+      font-weight: 800;
+      letter-spacing: -1px;
+      margin: 0 0 5px;
+    }
 
-.sub {
-  color: var(--muted);
-  font-size: 14px;
-  margin: 0 0 20px;
-}
+    .sub { color: var(--muted); font-size: 14px; margin: 0 0 20px; }
 
-.card {
-  background: linear-gradient(145deg, #10233d, #0b1424);
-  border: 1px solid rgba(64, 160, 255, .24);
-  border-radius: 23px;
-  padding: 20px;
-  box-shadow: 0 12px 35px #0006;
-  margin-bottom: 14px;
-}
+    .card {
+      background: linear-gradient(145deg, #10233d, #0b1424);
+      border: 1px solid rgba(64, 160, 255, .24);
+      border-radius: 23px;
+      padding: 20px;
+      box-shadow: 0 12px 35px #0006;
+      margin-bottom: 14px;
+    }
 
-.status {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  color: #65bdff;
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: .8px;
-  text-transform: uppercase;
-}
+    .status {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      color: #65bdff;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: .8px;
+      text-transform: uppercase;
+    }
 
-.dot {
-  width: 7px;
-  height: 7px;
-  background: var(--green);
-  border-radius: 50%;
-  box-shadow: 0 0 10px #42d9a0;
-}
+    .dot {
+      width: 7px;
+      height: 7px;
+      flex: 0 0 7px;
+      background: var(--green);
+      border-radius: 50%;
+      box-shadow: 0 0 10px #42d9a0;
+    }
 
-.plan {
-  font-size: 25px;
-  font-weight: 800;
-  margin: 10px 0 3px;
-}
+    .plan { font-size: 25px; font-weight: 800; margin: 10px 0 3px; }
+    .muted { color: var(--muted); }
+    .expiry { font-size: 13px; color: #a9bfdc; }
 
-.muted {
-  color: var(--muted);
-}
+    .primary {
+      width: 100%;
+      padding: 15px 18px;
+      border-radius: 15px;
+      background: linear-gradient(100deg, #0879d9, #28b5ff);
+      font-weight: 750;
+      color: #fff;
+      box-shadow: 0 8px 22px #078bdf35;
+    }
 
-.expiry {
-  font-size: 13px;
-  color: #a9bfdc;
-}
+    .primary:disabled { opacity: .6; cursor: wait; }
 
-.progress-wrap {
-  margin: 20px 0 8px;
-}
+    .secondary {
+      background: #14243b;
+      border: 1px solid var(--line);
+      padding: 13px 15px;
+      border-radius: 13px;
+      font-weight: 650;
+    }
 
-.progress-label {
-  display: flex;
-  justify-content: space-between;
-  font-size: 12px;
-  color: #b9cce5;
-  margin-bottom: 9px;
-}
+    .section-title { font-size: 17px; font-weight: 750; margin: 24px 0 12px; }
 
-.bar {
-  height: 7px;
-  background: #1c304b;
-  border-radius: 20px;
-  overflow: hidden;
-}
+    .nav {
+      position: fixed;
+      left: 50%;
+      transform: translateX(-50%);
+      bottom: calc(env(safe-area-inset-bottom) + 10px);
+      width: calc(100% - 32px);
+      max-width: 488px;
+      z-index: 100;
+      margin: 0;
+      background: rgba(8, 19, 35, .96);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      border: 1px solid rgba(104, 174, 255, .16);
+      border-radius: 19px;
+      padding: 7px;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 4px;
+      box-shadow: 0 10px 35px #0009;
+    }
 
-.bar span {
-  display: block;
-  width: 76%;
-  height: 100%;
-  border-radius: 20px;
-  background: linear-gradient(90deg, #0879d9, #48c2ff);
-}
+    .nav button {
+      background: transparent;
+      border-radius: 13px;
+      padding: 9px 2px;
+      color: #8193ae;
+      font-size: 11px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 5px;
+    }
 
-.primary {
-  width: 100%;
-  padding: 15px 18px;
-  border-radius: 15px;
-  background: linear-gradient(100deg, #0879d9, #28b5ff);
-  font-weight: 750;
-  color: #fff;
-  box-shadow: 0 8px 22px #078bdf35;
-}
+    .nav button b { font-size: 18px; font-weight: 500; }
+    .nav button.active { background: #102e50; color: #42baff; }
 
-.secondary {
-  background: #14243b;
-  border: 1px solid var(--line);
-  padding: 13px 15px;
-  border-radius: 13px;
-  font-weight: 650;
-}
+    .page { display: none; }
+    .page.active { display: block; }
 
-.section-title {
-  font-size: 17px;
-  font-weight: 750;
-  margin: 24px 0 12px;
-}
+    .row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+    }
 
-.stats {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
-}
+    .list-item {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 15px;
+      margin-bottom: 9px;
+    }
 
-.stat {
-  background: var(--panel);
-  border: 1px solid var(--line);
-  border-radius: 17px;
-  padding: 15px;
-}
+    .list-item strong { font-size: 14px; }
+    .list-item small {
+      display: block;
+      color: var(--muted);
+      margin-top: 5px;
+      font-size: 12px;
+    }
 
-.stat strong {
-  display: block;
-  font-size: 20px;
-  margin-bottom: 4px;
-}
+    .price-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
 
-.stat span {
-  font-size: 12px;
-  color: var(--muted);
-}
+    .price {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 17px;
+      padding: 16px;
+      text-align: left;
+    }
 
-/* Нижняя навигация закреплена у края экрана */
-.nav {
-  position: fixed;
-  left: 50%;
-  transform: translateX(-50%);
-  bottom: calc(env(safe-area-inset-bottom) + 10px);
-  width: calc(100% - 32px);
-  max-width: 488px;
-  z-index: 100;
-  margin: 0;
-  background: rgba(8, 19, 35, .96);
-  backdrop-filter: blur(18px);
-  -webkit-backdrop-filter: blur(18px);
-  border: 1px solid rgba(104, 174, 255, .16);
-  border-radius: 19px;
-  padding: 7px;
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 4px;
-  box-shadow: 0 10px 35px #0009;
-}
+    .price.selected {
+      border-color: var(--blue);
+      background: #102b49;
+      box-shadow: 0 0 0 1px var(--blue) inset;
+    }
 
-.nav button {
-  background: transparent;
-  border-radius: 13px;
-  padding: 9px 2px;
-  color: #8193ae;
-  font-size: 11px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 5px;
-}
+    .price .months { font-size: 13px; color: #b8cbe4; }
+    .price .amount { font-size: 22px; font-weight: 800; margin: 8px 0 3px; }
+    .price .hint { font-size: 11px; color: var(--muted); }
 
-.nav button b {
-  font-size: 18px;
-  font-weight: 500;
-}
+    .pill {
+      font-size: 10px;
+      color: #9bd9ff;
+      background: #12375a;
+      padding: 5px 8px;
+      border-radius: 20px;
+      white-space: nowrap;
+    }
 
-.nav button.active {
-  background: #102e50;
-  color: #42baff;
-}
+    .notice { font-size: 12px; line-height: 1.5; color: var(--muted); margin-top: 12px; }
 
-.page {
-  display: none;
-}
+    .empty {
+      padding: 24px;
+      text-align: center;
+      color: var(--muted);
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      font-size: 13px;
+    }
 
-.page.active {
-  display: block;
-}
+    .support {
+      display: block;
+      text-decoration: none;
+      text-align: center;
+      margin-top: 10px;
+      padding: 14px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      color: #8ed2ff;
+      background: #10243c;
+    }
 
-.row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 12px;
-}
-
-.list-item {
-  background: var(--panel);
-  border: 1px solid var(--line);
-  border-radius: 16px;
-  padding: 15px;
-  margin-bottom: 9px;
-}
-
-.list-item strong {
-  font-size: 14px;
-}
-
-.list-item small {
-  display: block;
-  color: var(--muted);
-  margin-top: 5px;
-  font-size: 12px;
-}
-
-.price-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
-}
-
-.price {
-  background: var(--panel);
-  border: 1px solid var(--line);
-  border-radius: 17px;
-  padding: 16px;
-  text-align: left;
-}
-
-.price.selected {
-  border-color: #28aaff;
-  background: #102b49;
-  box-shadow: 0 0 0 1px #28aaff inset;
-}
-
-.price .months {
-  font-size: 13px;
-  color: #b8cbe4;
-}
-
-.price .amount {
-  font-size: 22px;
-  font-weight: 800;
-  margin: 8px 0 3px;
-}
-
-.price .hint {
-  font-size: 11px;
-  color: var(--muted);
-}
-
-.pill {
-  font-size: 10px;
-  color: #9bd9ff;
-  background: #12375a;
-  padding: 5px 8px;
-  border-radius: 20px;
-}
-
-.notice {
-  font-size: 12px;
-  line-height: 1.5;
-  color: var(--muted);
-  margin-top: 12px;
-}
-
-.copy {
-  font-size: 12px;
-  color: #7dcaff;
-  background: #102b49;
-  border-radius: 10px;
-  padding: 9px 11px;
-}
-
-.empty {
-  padding: 24px;
-  text-align: center;
-  color: var(--muted);
-  background: var(--panel);
-  border: 1px solid var(--line);
-  border-radius: 16px;
-  font-size: 13px;
-}
-
-.support {
-  display: block;
-  text-decoration: none;
-  text-align: center;
-  margin-top: 10px;
-  padding: 14px;
-  border: 1px solid var(--line);
-  border-radius: 14px;
-  color: #8ed2ff;
-  background: #10243c;
-}
-
-@media (min-width: 520px) {
-  body {
-    padding-top: 12px;
-  }
-
-  .app {
-    padding-top: 25px;
-  }
-}
-
+    @media (min-width: 520px) {
+      body { padding-top: 12px; }
+      .app { padding-top: 25px; }
+    }
   </style>
 </head>
 <body>
 <div class="app">
-  <header class="top"><div class="brand"><div class="logo">✦</div><span>ippi <span style="color:#b58aff">VPN</span></span></div><div class="profile" id="avatar">D</div></header>
+  <header class="top">
+    <div class="brand">
+      <div class="logo">✦</div>
+      <span>ippi <span class="brand-vpn">VPN</span></span>
+    </div>
+    <div class="profile" id="avatar">D</div>
+  </header>
 
   <main>
     <section class="page active" id="home">
-      <p class="eyebrow">Личный кабинет</p><h1 class="heading">Привет<span id="helloName"></span> 👋</h1><p class="sub">Всё под контролем. Твоя приватность — наш приоритет.</p>
+      <p class="eyebrow">Личный кабинет</p>
+      <h1 class="heading">Привет<span id="helloName"></span> 👋</h1>
+      <p class="sub">Всё под контролем. Твоя приватность — наш приоритет.</p>
+
       <div class="card">
-  <div class="row">
-    <div class="status">
-      <i class="dot" style="background:#9292a3"></i>
-      Загружаем подписку...
-    </div>
-    <span class="pill">...</span>
-  </div>
+        <div class="row">
+          <div class="status" id="subscriptionStatus">
+            <i class="dot" style="background:#9292a3"></i>
+            Загружаем подписку...
+          </div>
+          <span class="pill" id="subscriptionPill">...</span>
+        </div>
+        <div class="plan" id="subscriptionPlan">Проверяем данные</div>
+        <div class="expiry" id="subscriptionExpiry">Пожалуйста, подожди</div>
+        <div class="progress-wrap" style="display:none"></div>
+        <button class="primary" style="margin-top:18px" onclick="go('plans')">
+          Выбрать тариф →
+        </button>
+      </div>
 
-  <div class="plan">Проверяем данные</div>
-  <div class="expiry">Пожалуйста, подожди</div>
-
-  <div class="progress-wrap" style="display:none">
-    <div class="progress-label">
-      <span>Осталось времени</span>
-      <strong></strong>
-    </div>
-    <div class="bar"><span></span></div>
-  </div>
-
-  <button class="primary" onclick="go('plans')">
-    Выбрать тариф →
-  </button>
-</div>
-
-<div class="list-item row" onclick="go('payments')">
-  <div>
-    <strong>История платежей</strong>
-    <small>Все покупки и продления</small>
-  </div>
-  <span>›</span>
-</div>
-      <div class="list-item row" onclick="go('devices')"><div><strong>Мои устройства</strong><small>Управление подключениями</small></div><span>›</span></div>
-      <div class="list-item row" onclick="go('payments')"><div><strong>История платежей</strong><small>Все покупки и продления</small></div><span>›</span></div>
+      <div class="list-item row" onclick="go('payments')" role="button">
+        <div>
+          <strong>История платежей</strong>
+          <small>Все покупки и продления</small>
+        </div>
+        <span>›</span>
+      </div>
     </section>
 
     <section class="page" id="plans">
-      <p class="eyebrow">Тарифы ippi</p><h1 class="heading">Выбери свой план</h1><p class="sub">Оплата напрямую при покупке подписки.</p>
+      <p class="eyebrow">Тарифы ippi</p>
+      <h1 class="heading">Выбери свой план</h1>
+      <p class="sub">Оплата напрямую при покупке подписки.</p>
+
       <div class="price-grid">
-        <button class="price" onclick="selectPlan(this,160, '1 месяц')"><span class="months">1 месяц</span><div class="amount">160 ₽</div><div class="hint">Гибкий старт</div></button>
-        <button class="price selected" onclick="selectPlan(this,449, '3 месяца')"><span class="months">3 месяца</span><div class="amount">449 ₽</div><div class="hint">Популярный выбор</div></button>
-        <button class="price" onclick="selectPlan(this,849, '6 месяцев')"><span class="months">6 месяцев</span><div class="amount">849 ₽</div><div class="hint">Выгоднее</div></button>
-        <button class="price" onclick="selectPlan(this,1599, '12 месяцев')"><span class="months">12 месяцев</span><div class="amount">1 599 ₽</div><div class="hint">Максимальная выгода</div></button>
+        <button class="price" onclick="selectPlan(this,160,'1 месяц')">
+          <span class="months">1 месяц</span>
+          <div class="amount">160 ₽</div>
+          <div class="hint">Гибкий старт</div>
+        </button>
+        <button class="price selected" onclick="selectPlan(this,449,'3 месяца')">
+          <span class="months">3 месяца</span>
+          <div class="amount">449 ₽</div>
+          <div class="hint">Популярный выбор</div>
+        </button>
+        <button class="price" onclick="selectPlan(this,849,'6 месяцев')">
+          <span class="months">6 месяцев</span>
+          <div class="amount">849 ₽</div>
+          <div class="hint">Выгоднее</div>
+        </button>
+        <button class="price" onclick="selectPlan(this,1599,'12 месяцев')">
+          <span class="months">12 месяцев</span>
+          <div class="amount">1 599 ₽</div>
+          <div class="hint">Максимальная выгода</div>
+        </button>
       </div>
-      <div class="card" style="margin-top:14px"><div class="row"><div><div class="muted" style="font-size:12px">Выбранный тариф</div><strong id="selectedPlan" style="display:block;margin-top:5px">3 месяца</strong></div><strong id="selectedPrice" style="font-size:23px">449 ₽</strong></div><button class="primary" style="margin-top:18px" onclick="demoPay()">Перейти к оплате</button><p class="notice">Демонстрационный экран. Реальная оплата подключается отдельно после настройки платёжного провайдера.</p></div>
+
+      <div class="card" style="margin-top:14px">
+        <div class="row">
+          <div>
+            <div class="muted" style="font-size:12px">Выбранный тариф</div>
+            <strong id="selectedPlan" style="display:block;margin-top:5px">3 месяца</strong>
+          </div>
+          <strong id="selectedPrice" style="font-size:23px">449 ₽</strong>
+        </div>
+        <button class="primary" id="payButton" style="margin-top:18px" onclick="demoPay()">
+          Перейти к оплате
+        </button>
+      </div>
     </section>
 
     <section class="page" id="payments">
-  <p class="eyebrow">Покупки</p>
-  <h1 class="heading">Платежи</h1>
-  <p class="sub">История операций по подписке.</p>
-
-  <div class="empty">Загружаем историю платежей...</div>
-</section>
-
-    <section class="page" id="devices">
-      <p class="eyebrow">Безопасность</p><h1 class="heading">Устройства</h1><p class="sub">Подключённые устройства и лимит тарифа.</p>
-      <div class="list-item row"><div><strong>iPhone</strong><small>Текущее устройство · активно</small></div><span class="pill">Активно</span></div>
-      <div class="list-item row"><div><strong>MacBook</strong><small>Последняя активность недавно</small></div><span class="pill">Активно</span></div>
-      <div class="empty">Используется 2 из 5 доступных устройств.</div>
-      <p class="notice">Управление реальными VPN-подключениями появится после подключения VPN-сервера и backend API.</p>
+      <p class="eyebrow">Покупки</p>
+      <h1 class="heading">Платежи</h1>
+      <p class="sub">История операций по подписке.</p>
+      <div id="paymentsList" class="empty">Загружаем историю платежей...</div>
     </section>
-<script>
-  const tg = window.Telegram?.WebApp;
 
-  if (tg) {
-    tg.ready();
-    tg.expand();
-  }
-
-  function go(id) {
-    document.querySelectorAll('.page').forEach(p =>
-      p.classList.toggle('active', p.id === id)
-    );
-    document.querySelectorAll('.nav button').forEach(b =>
-      b.classList.toggle(
-        'active',
-        b.dataset.page === id ||
-        (id === 'devices' && b.dataset.page === 'profile')
-      )
-    );
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  }
-
-  let plan = { price: 449, name: '3 месяца' };
-
-  function selectPlan(el, price, name) {
-    document.querySelectorAll('.price').forEach(p =>
-      p.classList.remove('selected')
-    );
-    el.classList.add('selected');
-    plan = { price, name };
-    document.getElementById('selectedPlan').textContent = name;
-    document.getElementById('selectedPrice').textContent =
-      price.toLocaleString('ru-RU') + ' ₽';
-  }
-
-async function demoPay() {
-  if (!tg?.initData) {
-    alert('Открой приложение через Telegram');
-    return;
-  }
-
-  const planCodes = {
-    '1 месяц': '1_month',
-    '3 месяца': '3_months',
-    '6 месяцев': '6_months',
-    '12 месяцев': '12_months'
-  };
-
-  const planCode = planCodes[plan.name];
-
-  if (!planCode) {
-    alert('Не удалось определить тариф');
-    return;
-  }
-
-  try {
-    if (tg.MainButton) tg.MainButton.showProgress();
-
-    const response = await fetch('/api/create-order', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        initData: tg.initData,
-        planCode
-      })
-    });
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      throw new Error(data.error || 'Ошибка создания платежа');
-    }
-
-    if (!data.confirmationUrl) {
-      throw new Error('Ссылка на оплату не получена');
-    }
-
-    tg.openLink(data.confirmationUrl);
-
-  } catch (error) {
-    if (tg.showAlert) tg.showAlert(error.message);
-    else alert(error.message);
-  } finally {
-    if (tg.MainButton) tg.MainButton.hideProgress();
-  }
-}
-
-  function shareReferral() {
-    const text = 'Присоединяйся к ippi VPN!';
-    if (tg?.openTelegramLink) {
-      tg.openTelegramLink(
-        'https://t.me/share/url?url=&text=' + encodeURIComponent(text)
-      );
-    } else if (navigator.share) {
-      navigator.share({ text });
-    } else {
-      alert(text);
-    }
-  }
-
-  function supportClick(e) {
-    e.preventDefault();
-    const msg = 'Контакт поддержки пока настраивается.';
-    if (tg?.showAlert) tg.showAlert(msg);
-    else alert(msg);
-    return false;
-  }
-
-  const planNames = {
-    '1_month': '1 месяц',
-    '3_months': '3 месяца',
-    '6_months': '6 месяцев',
-    '12_months': '12 месяцев'
-  };
-
-  function formatDate(value) {
-    if (!value) return 'Дата не указана';
-    return new Date(value).toLocaleDateString('ru-RU', {
-      day: 'numeric',
-      month: 'long',
-      year: 'numeric'
-    });
-  }
-
-  
-function showSubscription(subscription) {
-  const card = document.querySelector('#home .card');
-  const status = card.querySelector('.status');
-  const pill = card.querySelector('.pill');
-  const name = card.querySelector('.plan');
-  const expiry = card.querySelector('.expiry');
-  const progress = card.querySelector('.progress-wrap');
-
-  progress.style.display = 'none';
-
-  if (!subscription) {
-    status.innerHTML =
-      '<i class="dot" style="background:#9292a3"></i> Нет подписки';
-    pill.textContent = 'FREE';
-    name.textContent = 'Нет активного тарифа';
-    expiry.textContent = 'Выбери тариф, чтобы подключить VPN';
-    return;
-  }
-
-  const expiredByDate = subscription.expires_at &&
-    new Date(subscription.expires_at) <= new Date();
-
-  const state = expiredByDate ? 'expired' : subscription.status;
-
-  name.textContent =
-    planNames[subscription.plan_code] || 'Подписка';
-
-  if (state === 'active') {
-    status.innerHTML =
-      '<i class="dot"></i> Подписка активна';
-    pill.textContent = 'PREMIUM';
-    expiry.textContent = subscription.expires_at
-      ? 'Действует до ' + formatDate(subscription.expires_at)
-      : 'Подписка активна';
-  } else if (state === 'pending') {
-    status.innerHTML =
-      '<i class="dot" style="background:#e5a34b"></i> Ожидает оплаты';
-    pill.textContent = 'PENDING';
-    expiry.textContent = 'Заверши оплату, чтобы активировать подписку';
-  } else if (state === 'expired') {
-    status.innerHTML =
-      '<i class="dot" style="background:#e5a34b"></i> Подписка истекла';
-    pill.textContent = 'EXPIRED';
-    expiry.textContent = subscription.expires_at
-      ? 'Истекла ' + formatDate(subscription.expires_at)
-      : 'Срок действия завершён';
-  } else {
-    status.innerHTML =
-      '<i class="dot" style="background:#9292a3"></i> Подписка отменена';
-    pill.textContent = 'CANCELLED';
-    expiry.textContent = 'Подписка больше не действует';
-  }
-}
-
-
-  loadAccount();
-</script>
     <section class="page" id="profile">
-      <p class="eyebrow">Аккаунт</p><h1 class="heading">Профиль</h1><p class="sub">Настройки аккаунта ippi VPN.</p>
-      <div class="list-item"><strong id="userName">Пользователь Telegram</strong><small id="userId">Telegram ID будет доступен после запуска внутри Telegram</small></div>
+      <p class="eyebrow">Аккаунт</p>
+      <h1 class="heading">Профиль</h1>
+      <p class="sub">Настройки аккаунта ippi VPN.</p>
+
+      <div class="list-item">
+        <strong id="userName">Пользователь Telegram</strong>
+        <small id="userId">Telegram ID будет доступен после запуска внутри Telegram</small>
+      </div>
+
       <h2 class="section-title">Реферальная программа</h2>
-      <div class="card"><div class="plan" style="font-size:20px">Приглашай друзей</div><p class="notice">Поделись своей ссылкой и получай бонусы после запуска реферальной программы.</p><button class="secondary" style="width:100%;margin-top:12px" onclick="shareReferral()">Поделиться ссылкой</button></div>
-      <h2 class="section-title">Поддержка</h2><a class="support" href="https://t.me/" onclick="return supportClick(event)">Написать в поддержку ↗</a>
+      <div class="card">
+        <div class="plan" style="font-size:20px">Приглашай друзей</div>
+        <p class="notice">Реферальная программа готовится к запуску.</p>
+        <button class="secondary" style="width:100%;margin-top:12px" onclick="shareReferral()">
+          Поделиться ippi VPN
+        </button>
+      </div>
+
+      <h2 class="section-title">Поддержка</h2>
+      <a class="support" href="#" onclick="return supportClick(event)">Написать в поддержку ↗</a>
     </section>
   </main>
 
@@ -665,5 +400,295 @@ function showSubscription(subscription) {
   </nav>
 </div>
 
+<script>
+  const tg = window.Telegram?.WebApp;
+
+  if (tg) {
+    tg.ready();
+    tg.expand();
+  }
+
+  const planNames = {
+    '1_month': '1 месяц',
+    '3_months': '3 месяца',
+    '6_months': '6 месяцев',
+    '12_months': '12 месяцев'
+  };
+
+  let plan = { price: 449, name: '3 месяца' };
+
+  function go(id) {
+    document.querySelectorAll('.page').forEach(page => {
+      page.classList.toggle('active', page.id === id);
+    });
+
+    document.querySelectorAll('.nav button').forEach(button => {
+      button.classList.toggle('active', button.dataset.page === id);
+    });
+
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  function selectPlan(element, price, name) {
+    document.querySelectorAll('.price').forEach(item => {
+      item.classList.remove('selected');
+    });
+
+    element.classList.add('selected');
+    plan = { price, name };
+
+    document.getElementById('selectedPlan').textContent = name;
+    document.getElementById('selectedPrice').textContent =
+      price.toLocaleString('ru-RU') + ' ₽';
+  }
+
+  function formatDate(value) {
+    if (!value) return 'Дата не указана';
+
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return 'Дата не указана';
+
+    return date.toLocaleDateString('ru-RU', {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric'
+    });
+  }
+
+  function showSubscription(subscription) {
+    const status = document.getElementById('subscriptionStatus');
+    const pill = document.getElementById('subscriptionPill');
+    const name = document.getElementById('subscriptionPlan');
+    const expiry = document.getElementById('subscriptionExpiry');
+
+    if (!subscription) {
+      status.innerHTML = '<i class="dot" style="background:#9292a3"></i> Нет подписки';
+      pill.textContent = 'FREE';
+      name.textContent = 'Нет активного тарифа';
+      expiry.textContent = 'Выбери тариф, чтобы оформить подписку';
+      return;
+    }
+
+    const expiredByDate = subscription.expires_at &&
+      new Date(subscription.expires_at).getTime() <= Date.now();
+
+    const state = expiredByDate ? 'expired' : subscription.status;
+    name.textContent = planNames[subscription.plan_code] || 'Подписка';
+
+    if (state === 'active') {
+      status.innerHTML = '<i class="dot"></i> Подписка активна';
+      pill.textContent = 'PREMIUM';
+      expiry.textContent = subscription.expires_at
+        ? 'Действует до ' + formatDate(subscription.expires_at)
+        : 'Подписка активна';
+    } else if (state === 'pending') {
+      status.innerHTML = '<i class="dot" style="background:#e5a34b"></i> Ожидает оплаты';
+      pill.textContent = 'PENDING';
+      expiry.textContent = 'Заверши оплату, чтобы активировать подписку';
+    } else if (state === 'expired') {
+      status.innerHTML = '<i class="dot" style="background:#e5a34b"></i> Подписка истекла';
+      pill.textContent = 'EXPIRED';
+      expiry.textContent = subscription.expires_at
+        ? 'Истекла ' + formatDate(subscription.expires_at)
+        : 'Срок действия завершён';
+    } else {
+      status.innerHTML = '<i class="dot" style="background:#9292a3"></i> Подписка отменена';
+      pill.textContent = 'CANCELLED';
+      expiry.textContent = 'Подписка больше не действует';
+    }
+  }
+
+  function showPayments(payments) {
+    const list = document.getElementById('paymentsList');
+    list.replaceChildren();
+
+    if (!Array.isArray(payments) || payments.length === 0) {
+      list.className = 'empty';
+      list.textContent = 'Платежей пока нет.';
+      return;
+    }
+
+    list.className = '';
+
+    payments.forEach(payment => {
+      const item = document.createElement('div');
+      item.className = 'list-item';
+
+      const row = document.createElement('div');
+      row.className = 'row';
+
+      const title = document.createElement('strong');
+      title.textContent = 'Оплата ippi VPN';
+
+      const state = document.createElement('span');
+      state.textContent = payment.status === 'paid'
+        ? 'Успешно'
+        : payment.status === 'pending'
+          ? 'Ожидает оплаты'
+          : payment.status === 'failed'
+            ? 'Не прошла'
+            : payment.status === 'refunded'
+              ? 'Возвращена'
+              : payment.status || 'Статус неизвестен';
+
+      if (payment.status === 'paid') state.style.color = 'var(--green)';
+
+      const details = document.createElement('small');
+      details.textContent =
+        formatDate(payment.created_at) + ' · ' +
+        Number(payment.amount).toLocaleString('ru-RU') + ' ₽';
+
+      row.append(title, state);
+      item.append(row, details);
+      list.appendChild(item);
+    });
+  }
+
+  async function loadAccount() {
+    const status = document.getElementById('subscriptionStatus');
+
+    if (!tg?.initData) {
+      status.textContent = 'Открой приложение через Telegram';
+      document.getElementById('subscriptionPlan').textContent = 'Данные недоступны';
+      document.getElementById('subscriptionExpiry').textContent =
+        'Запусти Mini App через бота ippi VPN';
+      showPayments([]);
+      return;
+    }
+
+    try {
+      const response = await fetch('/api/me', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ initData: tg.initData })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Не удалось загрузить аккаунт');
+      }
+
+      const user = data.user || {};
+      const firstName = user.first_name || '';
+
+      document.getElementById('helloName').textContent =
+        firstName ? ', ' + firstName : '';
+
+      document.getElementById('avatar').textContent =
+        firstName ? firstName.charAt(0).toUpperCase() : 'D';
+
+      document.getElementById('userName').textContent =
+        firstName || user.username || 'Пользователь Telegram';
+
+      document.getElementById('userId').textContent =
+        user.telegram_id ? 'Telegram ID: ' + user.telegram_id : 'Telegram ID недоступен';
+
+      showSubscription(data.subscription || null);
+      showPayments(data.payments || []);
+    } catch (error) {
+      console.error('Account loading error:', error);
+      status.textContent = 'Не удалось загрузить аккаунт';
+      document.getElementById('subscriptionPlan').textContent = 'Ошибка загрузки';
+      document.getElementById('subscriptionExpiry').textContent =
+        'Проверь подключение и попробуй открыть приложение снова';
+      showPayments([]);
+    }
+  }
+
+  async function demoPay() {
+    if (!tg?.initData) {
+      if (tg?.showAlert) tg.showAlert('Открой приложение через Telegram');
+      else alert('Открой приложение через Telegram');
+      return;
+    }
+
+    const planCodes = {
+      '1 месяц': '1_month',
+      '3 месяца': '3_months',
+      '6 месяцев': '6_months',
+      '12 месяцев': '12_months'
+    };
+
+    const planCode = planCodes[plan.name];
+    if (!planCode) {
+      if (tg.showAlert) tg.showAlert('Не удалось определить тариф');
+      return;
+    }
+
+    const confirmed = await new Promise(resolve => {
+      if (typeof tg.showPopup !== 'function') {
+        resolve(window.confirm('Подтвердить оплату ' + plan.price + ' ₽?'));
+        return;
+      }
+
+      tg.showPopup({
+        title: 'Подтверждение оплаты',
+        message: 'Вы действительно хотите купить тариф «' +
+          plan.name + '» за ' + plan.price.toLocaleString('ru-RU') + ' ₽?',
+        buttons: [
+          { id: 'pay', type: 'default', text: 'Оплатить' },
+          { id: 'cancel', type: 'cancel', text: 'Отмена' }
+        ]
+      }, buttonId => resolve(buttonId === 'pay'));
+    });
+
+    if (!confirmed) return;
+
+    const payButton = document.getElementById('payButton');
+    payButton.disabled = true;
+    payButton.textContent = 'Создаём платёж...';
+
+    try {
+      const response = await fetch('/api/create-order', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ initData: tg.initData, planCode })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Ошибка создания платежа');
+      }
+
+      if (!data.confirmationUrl) {
+        throw new Error('Ссылка на оплату не получена');
+      }
+
+      tg.openLink(data.confirmationUrl);
+    } catch (error) {
+      console.error('Payment creation error:', error);
+      if (tg.showAlert) tg.showAlert(error.message);
+      else alert(error.message);
+    } finally {
+      payButton.disabled = false;
+      payButton.textContent = 'Перейти к оплате';
+    }
+  }
+
+  function shareReferral() {
+    const shareText = 'Присоединяйся к ippi VPN!';
+    const shareUrl = 'https://t.me/share/url?url=' +
+      encodeURIComponent('https://t.me/') +
+      '&text=' + encodeURIComponent(shareText);
+
+    if (tg?.openTelegramLink) {
+      tg.openTelegramLink(shareUrl);
+    } else {
+      window.alert('Реферальная ссылка ещё не настроена.');
+    }
+  }
+
+  function supportClick(event) {
+    event.preventDefault();
+    const message = 'Контакт поддержки пока не настроен.';
+    if (tg?.showAlert) tg.showAlert(message);
+    else alert(message);
+    return false;
+  }
+
+  loadAccount();
+</script>
 </body>
 </html>
