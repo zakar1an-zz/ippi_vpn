@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -171,24 +170,25 @@
       border-radius: 19px;
       padding: 7px;
       display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 4px;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 3px;
       box-shadow: 0 10px 35px #0009;
     }
 
     .nav button {
       background: transparent;
       border-radius: 13px;
-      padding: 9px 2px;
+      padding: 8px 1px;
       color: #8193ae;
-      font-size: 11px;
+      font-size: 10px;
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 5px;
+      gap: 4px;
+      min-width: 0;
     }
 
-    .nav button b { font-size: 18px; font-weight: 500; }
+    .nav button b { font-size: 17px; font-weight: 500; }
     .nav button.active { background: #102e50; color: #42baff; }
 
     .page { display: none; }
@@ -332,6 +332,121 @@
     .ref-copy {
       background: #14243b;
       border: 1px solid var(--line);
+    }
+
+    /* Раздел инструкции */
+    .platform-card {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      text-align: left;
+      padding: 17px;
+      margin-bottom: 10px;
+      border-radius: 17px;
+      background: linear-gradient(145deg, #10233d, #0b1424);
+      border: 1px solid var(--line);
+    }
+
+    .platform-icon {
+      width: 46px;
+      height: 46px;
+      flex: 0 0 46px;
+      display: grid;
+      place-items: center;
+      border-radius: 14px;
+      background: #12375a;
+      color: #8ed2ff;
+      font-size: 22px;
+      font-weight: 800;
+    }
+
+    .platform-copy { flex: 1; min-width: 0; }
+    .platform-copy strong { display: block; font-size: 15px; }
+
+    .platform-copy small {
+      display: block;
+      margin-top: 5px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.4;
+    }
+
+    .platform-arrow { color: #70c8ff; font-size: 23px; }
+
+    .back-button {
+      background: #14243b;
+      border: 1px solid var(--line);
+      color: #9bd9ff;
+      padding: 10px 13px;
+      border-radius: 12px;
+      margin-bottom: 17px;
+      font-size: 13px;
+      font-weight: 650;
+    }
+
+    .steps {
+      counter-reset: instruction-step;
+      padding: 0;
+      margin: 16px 0 0;
+      list-style: none;
+    }
+
+    .steps li {
+      position: relative;
+      counter-increment: instruction-step;
+      padding: 0 0 18px 43px;
+      color: #dceaff;
+      font-size: 13px;
+      line-height: 1.55;
+    }
+
+    .steps li::before {
+      content: counter(instruction-step);
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 29px;
+      height: 29px;
+      display: grid;
+      place-items: center;
+      border-radius: 10px;
+      color: #a6ddff;
+      background: #12375a;
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .steps li strong { color: #fff; }
+
+    .instruction-note {
+      margin-top: 14px;
+      padding: 13px;
+      border-radius: 13px;
+      background: #0a1b30;
+      border: 1px solid var(--line);
+      color: #9bb2d0;
+      font-size: 12px;
+      line-height: 1.5;
+    }
+
+    .download-placeholder {
+      display: block;
+      width: 100%;
+      margin-top: 14px;
+      padding: 13px;
+      border-radius: 13px;
+      text-align: center;
+      background: #14243b;
+      border: 1px dashed rgba(104, 174, 255, .3);
+      color: #9bd9ff;
+      font-size: 12px;
+    }
+
+    @media (max-width: 360px) {
+      .nav button { font-size: 9px; }
+      .nav button b { font-size: 16px; }
+      .heading { font-size: 25px; }
     }
 
     @media (min-width: 520px) {
@@ -485,12 +600,148 @@
         Написать в поддержку ↗
       </a>
     </section>
+
+    <!-- Главная страница инструкций -->
+    <section class="page" id="instructions">
+      <p class="eyebrow">Помощь и настройка</p>
+      <h1 class="heading">Инструкция</h1>
+      <p class="sub">Выбери устройство, на котором хочешь пользоваться ippi VPN.</p>
+
+      <button class="platform-card" onclick="openInstruction('ios')">
+        <span class="platform-icon"></span>
+        <span class="platform-copy">
+          <strong>iPhone и iPad</strong>
+          <small>Установка INCY и подключение к ippi VPN</small>
+        </span>
+        <span class="platform-arrow">›</span>
+      </button>
+
+      <button class="platform-card" onclick="openInstruction('android')">
+        <span class="platform-icon">◆</span>
+        <span class="platform-copy">
+          <strong>Android</strong>
+          <small>Установка INCY и импорт конфигурации</small>
+        </span>
+        <span class="platform-arrow">›</span>
+      </button>
+
+      <button class="platform-card" onclick="openInstruction('windows')">
+        <span class="platform-icon">⊞</span>
+        <span class="platform-copy">
+          <strong>Windows</strong>
+          <small>Установка v2rayN и запуск подключения</small>
+        </span>
+        <span class="platform-arrow">›</span>
+      </button>
+
+      <div class="instruction-note">
+        Для подключения понадобится персональная конфигурация ippi VPN.
+        Она появится в личном кабинете после настройки серверов и выдачи доступа.
+      </div>
+    </section>
+
+    <!-- Инструкция iOS -->
+    <section class="page" id="instruction-ios">
+      <button class="back-button" onclick="backToInstructions()">← Все устройства</button>
+      <p class="eyebrow">Инструкция · iOS</p>
+      <h1 class="heading">iPhone и iPad</h1>
+      <p class="sub">Подключение через приложение INCY.</p>
+
+      <div class="card">
+        <div class="row">
+          <strong>Приложение INCY</strong>
+          <span class="pill">iOS</span>
+        </div>
+        <p class="notice">Установи INCY из официального источника, доступного для твоего устройства.</p>
+        <div class="download-placeholder">Ссылка на скачивание будет добавлена</div>
+      </div>
+
+      <h2 class="section-title">Как подключиться</h2>
+      <ol class="steps">
+        <li>Открой <strong>App Store</strong> и найди приложение <strong>INCY</strong>. Установи его, если оно доступно в твоём регионе.</li>
+        <li>Открой INCY и разреши добавление VPN-конфигурации, если iPhone покажет системный запрос.</li>
+        <li>Вернись в личный кабинет ippi VPN и получи свою персональную конфигурацию — QR-код или ссылку подписки.</li>
+        <li>В INCY выбери импорт конфигурации. Если используешь QR-код, отсканируй его; если ссылку — вставь её в соответствующее поле.</li>
+        <li>Сохрани добавленный профиль, выбери его в приложении и нажми кнопку подключения.</li>
+        <li>Подтверди системный запрос iOS на создание VPN-подключения. После успешного соединения приложение покажет активный статус.</li>
+      </ol>
+
+      <div class="instruction-note">
+        Названия пунктов и расположение кнопок могут немного отличаться в зависимости от версии INCY.
+        Не используй чужие конфигурации — подключай только свой профиль ippi VPN.
+      </div>
+    </section>
+
+    <!-- Инструкция Android -->
+    <section class="page" id="instruction-android">
+      <button class="back-button" onclick="backToInstructions()">← Все устройства</button>
+      <p class="eyebrow">Инструкция · Android</p>
+      <h1 class="heading">Android</h1>
+      <p class="sub">Подключение через приложение INCY.</p>
+
+      <div class="card">
+        <div class="row">
+          <strong>Приложение INCY</strong>
+          <span class="pill">Android</span>
+        </div>
+        <p class="notice">Установи INCY из официального источника, который будет указан здесь.</p>
+        <div class="download-placeholder">Ссылка на скачивание будет добавлена</div>
+      </div>
+
+      <h2 class="section-title">Как подключиться</h2>
+      <ol class="steps">
+        <li>Скачай и установи <strong>INCY</strong> из официального источника. Не устанавливай APK-файлы с неизвестных сайтов.</li>
+        <li>Открой INCY и ознакомься с первым запуском приложения.</li>
+        <li>В личном кабинете ippi VPN получи персональную конфигурацию — QR-код или ссылку подписки.</li>
+        <li>В INCY нажми добавление профиля. Выбери сканирование QR-кода либо импорт по ссылке и используй свои данные ippi VPN.</li>
+        <li>Сохрани профиль, выбери его в списке и нажми кнопку подключения.</li>
+        <li>Разреши Android создать VPN-подключение, если появится системный запрос. Дождись статуса подключения в INCY.</li>
+      </ol>
+
+      <div class="instruction-note">
+        Интерфейс может отличаться в зависимости от версии Android и INCY.
+        Для стабильной работы используй актуальную версию приложения.
+      </div>
+    </section>
+
+    <!-- Инструкция Windows -->
+    <section class="page" id="instruction-windows">
+      <button class="back-button" onclick="backToInstructions()">← Все устройства</button>
+      <p class="eyebrow">Инструкция · Windows</p>
+      <h1 class="heading">Windows</h1>
+      <p class="sub">Подключение через клиент v2rayN.</p>
+
+      <div class="card">
+        <div class="row">
+          <strong>Приложение v2rayN</strong>
+          <span class="pill">Windows</span>
+        </div>
+        <p class="notice">Скачай актуальную версию v2rayN из официального репозитория проекта.</p>
+        <div class="download-placeholder">Официальная ссылка будет добавлена</div>
+      </div>
+
+      <h2 class="section-title">Как подключиться</h2>
+      <ol class="steps">
+        <li>Скачай подходящую сборку <strong>v2rayN</strong> для своей версии Windows из официального источника.</li>
+        <li>Распакуй архив в отдельную папку и запусти приложение. Если Windows запросит разрешение, проверь источник файла перед подтверждением.</li>
+        <li>В личном кабинете ippi VPN получи персональную VLESS-конфигурацию или ссылку подписки.</li>
+        <li>В v2rayN импортируй конфигурацию: используй импорт из буфера обмена для скопированной ссылки либо импорт из файла, если тебе выдали файл конфигурации.</li>
+        <li>Проверь, что добавленный сервер появился в списке. Выбери его и включи системный прокси или режим, который будет указан в инструкции ippi VPN.</li>
+        <li>Проверь подключение. Если соединение не устанавливается, скопируй сообщение об ошибке и отправь его в поддержку ippi VPN.</li>
+      </ol>
+
+      <div class="instruction-note">
+        Конкретные пункты меню v2rayN зависят от версии клиента.
+        Персональные ссылки и конфигурации никому не пересылай: они дают доступ к твоей подписке.
+      </div>
+    </section>
   </main>
 
   <nav class="nav">
     <button class="active" data-page="home" onclick="go('home')"><b>⌂</b>Главная</button>
     <button data-page="plans" onclick="go('plans')"><b>✦</b>Тарифы</button>
     <button data-page="payments" onclick="go('payments')"><b>▤</b>Платежи</button>
+    <button data-page="instructions" onclick="go('instructions')"><b>ⓘ</b>Инструкция</button>
     <button data-page="profile" onclick="go('profile')"><b>☻</b>Профиль</button>
   </nav>
 </div>
@@ -531,6 +782,30 @@
     });
 
     window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  function openInstruction(platform) {
+    const pageId = 'instruction-' + platform;
+    const page = document.getElementById(pageId);
+
+    if (!page) {
+      showMessage('Инструкция пока недоступна.');
+      return;
+    }
+
+    document.querySelectorAll('.page').forEach(item => {
+      item.classList.toggle('active', item.id === pageId);
+    });
+
+    document.querySelectorAll('.nav button').forEach(button => {
+      button.classList.toggle('active', button.dataset.page === 'instructions');
+    });
+
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  function backToInstructions() {
+    go('instructions');
   }
 
   function selectPlan(element, price, name) {
