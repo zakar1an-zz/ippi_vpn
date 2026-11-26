@@ -681,12 +681,17 @@
   }
 
   function supportClick(event) {
-    event.preventDefault();
-    const message = 'Контакт поддержки пока не настроен.';
-    if (tg?.showAlert) tg.showAlert(message);
-    else alert(message);
-    return false;
+  event.preventDefault();
+  const supportUrl = 'https://t.me/ippi_support';
+
+  if (tg?.openTelegramLink) {
+    tg.openTelegramLink(supportUrl);
+  } else {
+    window.open(supportUrl, '_blank');
   }
+
+  return false;
+}
 
   loadAccount();
 </script>
