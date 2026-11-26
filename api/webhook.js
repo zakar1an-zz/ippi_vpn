@@ -13,6 +13,12 @@ const MAIN_IMAGE =
 const CABINET_IMAGE =
   "https://raw.githubusercontent.com/zakar1an-zz/ippi_vpn/main/5F56BBF4-3D2A-4045-95F5-97B794B7ABE8.png";
 
+const SUPPORT_IMAGE =
+  "https://raw.githubusercontent.com/zakar1an-zz/ippi_vpn/main/6C514B83-5272-46AF-905B-6B6C1EE27AE9.png";
+
+const REFERRAL_IMAGE =
+  "https://raw.githubusercontent.com/zakar1an-zz/ippi_vpn/main/C1605ED7-916A-4D6A-B3F3-289B7250E53B.png";
+
 async function telegram(method, payload) {
   const token = process.env.BOT_TOKEN;
   if (!token) throw new Error("BOT_TOKEN missing");
@@ -226,7 +232,7 @@ async function showWelcome(chatId) {
   });
 }
 
-// Главное меню — своя фотография
+// Главное меню
 async function showMainMenu(chatId, message = null) {
   await showScreen(
     chatId,
@@ -238,7 +244,7 @@ async function showMainMenu(chatId, message = null) {
   );
 }
 
-// Личный кабинет — отдельная фотография
+// Личный кабинет
 async function showSubscription(chatId, telegramId, message = null) {
   const profile = await getProfile(telegramId);
 
@@ -338,12 +344,12 @@ async function showKeyDevices(chatId, message = null) {
   );
 }
 
-// Поддержка
+// Поддержка — отдельная фотография
 async function showSupport(chatId, message = null) {
   await showScreen(
     chatId,
     message,
-    MAIN_IMAGE,
+    SUPPORT_IMAGE,
     "🎧 ПОДДЕРЖКА ippi VPN\n\n" +
     "Возникли вопросы по подключению, оплате или подписке?\n\n" +
     "Напиши нам — постараемся помочь.",
@@ -362,12 +368,12 @@ async function showSupport(chatId, message = null) {
   );
 }
 
-// Реферальная программа
+// Пригласить друга — отдельная фотография
 async function showReferral(chatId, message = null) {
   await showScreen(
     chatId,
     message,
-    MAIN_IMAGE,
+    REFERRAL_IMAGE,
     "🎁 РЕФЕРАЛЬНАЯ ПРОГРАММА\n\n" +
     "Приглашай друзей и получай бонусы за их подписки.\n\n" +
     "Реферальная программа скоро появится.",
