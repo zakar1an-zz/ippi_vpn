@@ -19,7 +19,8 @@ const SUPPORT_IMAGE =
 const REFERRAL_IMAGE =
   "https://raw.githubusercontent.com/zakar1an-zz/ippi_vpn/main/C1605ED7-916A-4D6A-B3F3-289B7250E53B.png";
 
-async function telegram(method, payload) {
+// Telegram API
+async function telegram(method, payload = {}) {
   const token = process.env.BOT_TOKEN;
   if (!token) throw new Error("BOT_TOKEN missing");
 
@@ -41,6 +42,12 @@ async function telegram(method, payload) {
   return data;
 }
 
+// Получение username бота автоматически
+async function getBotUsername() {
+  const result = await telegram("getMe");
+  return result.result.username;
+}
+
 // Supabase
 function supabaseHeaders() {
   const key = process.env.SUPABASE_SECRET_KEY;
@@ -56,6 +63,7 @@ function supabaseHeaders() {
   };
 }
 
+// Регистрация пользователя
 async function saveUser(user) {
   const url = process.env.SUPABASE_URL;
 
@@ -65,7 +73,7 @@ async function saveUser(user) {
       method: "POST",
       headers: {
         ...supabaseHeaders(),
-        Prefer: "resolution=merge-duplicates,return=minimal"
+        Prefer: "resolution=ignore-duplicates,return=representation"
       },
       body: JSON.stringify({
         telegram_id: user.id,
@@ -78,8 +86,103 @@ async function saveUser(user) {
   if (!response.ok) {
     throw new Error(`Supabase save error: ${await response.text()}`);
   }
+
+  const createdUsers = await response.json();
+
+  if (createdUsers.length > 0) {
+    return {
+      user: createdUsers[0],
+      isNew: true
+    };
+  }
+
+  // Пользователь уже существует
+  const existingResponse = await fetch(
+    `${url}/rest/v1/users?telegram_id=eq.${user.id}&select=id,telegram_id,username,first_name&limit=1`,
+    { headers: supabaseHeaders() }
+  );
+
+  if (!existingResponse.ok) {
+    throw new Error(`User lookup error: ${await existingResponse.text()}`);
+  }
+
+  const existingUsers = await existingResponse.json();
+
+  if (!existingUsers.length) {
+    throw new Error("User not found after registration");
+  }
+
+  // Обновляем имя и username существующего пользователя
+  await fetch(
+    `${url}/rest/v1/users?telegram_id=eq.${user.id}`,
+    {
+      method: "PATCH",
+      headers: {
+        ...supabaseHeaders(),
+        Prefer: "return=minimal"
+      },
+      body: JSON.stringify({
+        username: user.username || null,
+        first_name: user.first_name || null
+      })
+    }
+  );
+
+  return {
+    user: existingUsers[0],
+    isNew: false
+  };
 }
 
+// Регистрация приглашения
+async function registerReferral(inviterTelegramId, invitedUser) {
+  if (!/^\d+$/.test(String(inviterTelegramId))) return;
+
+  if (
+    Number(inviterTelegramId) ===
+    Number(invitedUser.telegram_id)
+  ) {
+    return;
+  }
+
+  const url = process.env.SUPABASE_URL;
+  const headers = supabaseHeaders();
+
+  const inviterResponse = await fetch(
+    `${url}/rest/v1/users?telegram_id=eq.${inviterTelegramId}&select=id&limit=1`,
+    { headers }
+  );
+
+  if (!inviterResponse.ok) {
+    throw new Error(`Inviter lookup error: ${await inviterResponse.text()}`);
+  }
+
+  const inviters = await inviterResponse.json();
+
+  if (!inviters.length) return;
+
+  const response = await fetch(
+    `${url}/rest/v1/referrals`,
+    {
+      method: "POST",
+      headers: {
+        ...headers,
+        Prefer: "resolution=ignore-duplicates,return=minimal"
+      },
+      body: JSON.stringify({
+        inviter_id: inviters[0].id,
+        invited_id: invitedUser.id,
+        status: "pending"
+      })
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error(`Referral save error: ${await response.text()}`);
+  }
+}
+
+// Получение профиля и подписки
 async function getProfile(telegramId) {
   const url = process.env.SUPABASE_URL;
   const headers = supabaseHeaders();
@@ -115,6 +218,23 @@ async function getProfile(telegramId) {
   };
 }
 
+// Количество приглашённых
+async function getReferralCount(userId) {
+  const url = process.env.SUPABASE_URL;
+
+  const response = await fetch(
+    `${url}/rest/v1/referrals?inviter_id=eq.${userId}&select=id&limit=1000`,
+    { headers: supabaseHeaders() }
+  );
+
+  if (!response.ok) {
+    throw new Error(`Referral count error: ${await response.text()}`);
+  }
+
+  const referrals = await response.json();
+  return referrals.length;
+}
+
 // Форматирование
 function formatDate(date) {
   return new Intl.DateTimeFormat("ru-RU", {
@@ -138,7 +258,7 @@ function planName(code) {
   return names[code] || code;
 }
 
-// Главное меню — без кнопки тарифов
+// Главное меню
 const mainKeyboard = {
   inline_keyboard: [
     [{
@@ -175,7 +295,7 @@ const backKeyboard = {
   ]
 };
 
-// Переключение экранов в одном сообщении
+// Переключение экранов
 async function showScreen(chatId, message, photo, caption, keyboard) {
   const media = {
     type: "photo",
@@ -344,7 +464,7 @@ async function showKeyDevices(chatId, message = null) {
   );
 }
 
-// Поддержка — отдельная фотография
+// Поддержка
 async function showSupport(chatId, message = null) {
   await showScreen(
     chatId,
@@ -368,16 +488,58 @@ async function showSupport(chatId, message = null) {
   );
 }
 
-// Пригласить друга — отдельная фотография
-async function showReferral(chatId, message = null) {
+// Реферальная программа
+async function showReferral(chatId, telegramId, message = null) {
+  const profile = await getProfile(telegramId);
+
+  if (!profile) {
+    await showScreen(
+      chatId,
+      message,
+      REFERRAL_IMAGE,
+      "Аккаунт не найден. Нажми /start.",
+      backKeyboard
+    );
+    return;
+  }
+
+  const botUsername = await getBotUsername();
+  const referralLink =
+    `https://t.me/${botUsername}?start=ref_${telegramId}`;
+
+  const referralCount = await getReferralCount(profile.user.id);
+
+  const shareUrl =
+    "https://t.me/share/url?url=" +
+    encodeURIComponent(referralLink) +
+    "&text=" +
+    encodeURIComponent("Попробуй ippi VPN!");
+
   await showScreen(
     chatId,
     message,
     REFERRAL_IMAGE,
-    "🎁 РЕФЕРАЛЬНАЯ ПРОГРАММА\n\n" +
-    "Приглашай друзей и получай бонусы за их подписки.\n\n" +
-    "Реферальная программа скоро появится.",
-    backKeyboard
+    "🎁 РЕФЕРАЛЬНАЯ ПРОГРАММА ippi VPN\n\n" +
+    "Приглашай друзей по своей личной ссылке.\n\n" +
+    "🔗 ТВОЯ ССЫЛКА:\n" +
+    referralLink +
+    "\n\n" +
+    `👥 Приглашено друзей: ${referralCount}\n\n` +
+    "🎉 Бонус: 5 бесплатных дней за первую успешную оплату друга.\n" +
+    "Максимум — 15 бонусных дней за календарный месяц.\n\n" +
+    "Бонусы будут начисляться после подключения автоматической проверки оплат.",
+    {
+      inline_keyboard: [
+        [{
+          text: "Поделиться ссылкой",
+          url: shareUrl
+        }],
+        [{
+          text: "← Главное меню",
+          callback_data: "main_menu"
+        }]
+      ]
+    }
   );
 }
 
@@ -393,11 +555,27 @@ module.exports = async (req, res) => {
     if (update.message) {
       const chatId = update.message.chat.id;
       const telegramUser = update.message.from;
-      const command = (update.message.text || "").split(" ")[0];
+
+      const parts = (update.message.text || "")
+        .trim()
+        .split(/\s+/);
+
+      const command = (parts[0] || "").split("@")[0];
+      const startPayload = parts[1] || "";
 
       if (command === "/start") {
         if (telegramUser) {
-          await saveUser(telegramUser);
+          const saved = await saveUser(telegramUser);
+
+          // Учитываем приглашение только при первой регистрации
+          const referralMatch = startPayload.match(/^ref_(\d+)$/);
+
+          if (saved.isNew && referralMatch) {
+            await registerReferral(
+              referralMatch[1],
+              saved.user
+            );
+          }
         }
 
         await showWelcome(chatId);
@@ -435,7 +613,7 @@ module.exports = async (req, res) => {
         await showSupport(chatId, message);
 
       } else if (query.data === "referral") {
-        await showReferral(chatId, message);
+        await showReferral(chatId, query.from.id, message);
       }
     }
 
