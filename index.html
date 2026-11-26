@@ -568,140 +568,61 @@ async function demoPay() {
     });
   }
 
-  function showSubscription(subscription) {
-    const card = document.querySelector('#home .card');
-    const status = card.querySelector('.status');
-    const pill = card.querySelector('.pill');
-    const name = card.querySelector('.plan');
-    const expiry = card.querySelector('.expiry');
-    const progress = card.querySelector('.progress-wrap');
+  
+function showSubscription(subscription) {
+  const card = document.querySelector('#home .card');
+  const status = card.querySelector('.status');
+  const pill = card.querySelector('.pill');
+  const name = card.querySelector('.plan');
+  const expiry = card.querySelector('.expiry');
+  const progress = card.querySelector('.progress-wrap');
 
-    if (!subscription) {
-      status.innerHTML = '<i class="dot" style="background:#9292a3"></i> Нет подписки';
-      pill.textContent = 'FREE';
-      name.textContent = 'Нет активного тарифа';
-      expiry.textContent = 'Выбери тариф, чтобы подключить VPN';
-      progress.style.display = 'none';
-      return;
-    }
+  progress.style.display = 'none';
 
-    const expired = subscription.expires_at &&
-      new Date(subscription.expires_at) <= new Date();
+  if (!subscription) {
+    status.innerHTML =
+      '<i class="dot" style="background:#9292a3"></i> Нет подписки';
+    pill.textContent = 'FREE';
+    name.textContent = 'Нет активного тарифа';
+    expiry.textContent = 'Выбери тариф, чтобы подключить VPN';
+    return;
+  }
 
-    const active = subscription.status === 'active' && !expired;
+  const expiredByDate = subscription.expires_at &&
+    new Date(subscription.expires_at) <= new Date();
 
-    status.innerHTML = active
-      ? '<i class="dot"></i> Подписка активна'
-      : '<i class="dot" style="background:#e5a34b"></i> Подписка не активна';
+  const state = expiredByDate ? 'expired' : subscription.status;
 
-    pill.textContent = active ? 'PREMIUM' : 'EXPIRED';
-    name.textContent = planNames[subscription.plan_code] || 'Подписка';
+  name.textContent =
+    planNames[subscription.plan_code] || 'Подписка';
+
+  if (state === 'active') {
+    status.innerHTML =
+      '<i class="dot"></i> Подписка активна';
+    pill.textContent = 'PREMIUM';
     expiry.textContent = subscription.expires_at
       ? 'Действует до ' + formatDate(subscription.expires_at)
-      : 'Дата окончания пока не указана';
-
-    progress.style.display = 'none';
+      : 'Подписка активна';
+  } else if (state === 'pending') {
+    status.innerHTML =
+      '<i class="dot" style="background:#e5a34b"></i> Ожидает оплаты';
+    pill.textContent = 'PENDING';
+    expiry.textContent = 'Заверши оплату, чтобы активировать подписку';
+  } else if (state === 'expired') {
+    status.innerHTML =
+      '<i class="dot" style="background:#e5a34b"></i> Подписка истекла';
+    pill.textContent = 'EXPIRED';
+    expiry.textContent = subscription.expires_at
+      ? 'Истекла ' + formatDate(subscription.expires_at)
+      : 'Срок действия завершён';
+  } else {
+    status.innerHTML =
+      '<i class="dot" style="background:#9292a3"></i> Подписка отменена';
+    pill.textContent = 'CANCELLED';
+    expiry.textContent = 'Подписка больше не действует';
   }
+}
 
-  function showPayments(payments) {
-    const section = document.getElementById('payments');
-
-    section.querySelectorAll('.list-item, .empty').forEach(el =>
-      el.remove()
-    );
-
-    const notice = section.querySelector('.notice');
-    if (notice) notice.remove();
-
-    if (!payments || payments.length === 0) {
-      const empty = document.createElement('div');
-      empty.className = 'empty';
-      empty.textContent = 'Платежей пока нет.';
-      section.appendChild(empty);
-      return;
-    }
-
-    payments.forEach(payment => {
-      const item = document.createElement('div');
-      item.className = 'list-item';
-
-      const row = document.createElement('div');
-      row.className = 'row';
-
-      const title = document.createElement('strong');
-      title.textContent = 'Оплата ippi VPN';
-
-      const state = document.createElement('span');
-      state.textContent = payment.status === 'paid'
-        ? 'Успешно'
-        : payment.status === 'pending'
-          ? 'Ожидает оплаты'
-          : payment.status;
-
-      if (payment.status === 'paid') {
-        state.style.color = 'var(--green)';
-      }
-
-      const date = document.createElement('small');
-      date.textContent =
-        formatDate(payment.created_at) + ' · ' +
-        Number(payment.amount).toLocaleString('ru-RU') + ' ' +
-        (payment.currency || 'RUB');
-
-      row.append(title, state);
-      item.append(row, date);
-      section.appendChild(item);
-    });
-  }
-
-  async function loadAccount() {
-    const status = document.querySelector('#home .card .status');
-    status.textContent = 'Загружаем аккаунт...';
-
-    if (!tg?.initData) {
-      status.textContent = 'Открой приложение через Telegram';
-      return;
-    }
-
-    try {
-      const response = await fetch('/api/me', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ initData: tg.initData })
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Не удалось загрузить аккаунт');
-      }
-
-      const user = data.user;
-      const first = user.first_name || '';
-
-      document.getElementById('helloName').textContent =
-        first ? ', ' + first : '';
-
-      document.getElementById('avatar').textContent =
-        first ? first[0].toUpperCase() : 'D';
-
-      document.getElementById('userName').textContent =
-        first || user.username || 'Пользователь Telegram';
-
-      document.getElementById('userId').textContent =
-        'Telegram ID: ' + user.telegram_id;
-
-      showSubscription(data.subscription);
-      showPayments(data.payments);
-
-    } catch (error) {
-      console.error('Account loading error:', error);
-      status.textContent = 'Не удалось загрузить аккаунт';
-      if (tg?.showAlert) {
-        tg.showAlert(error.message);
-      }
-    }
-  }
 
   loadAccount();
 </script>
