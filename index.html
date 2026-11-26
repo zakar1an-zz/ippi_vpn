@@ -76,7 +76,222 @@
       <div class="empty">Используется 2 из 5 доступных устройств.</div>
       <p class="notice">Управление реальными VPN-подключениями появится после подключения VPN-сервера и backend API.</p>
     </section>
+<script>
+  const tg = window.Telegram?.WebApp;
 
+  if (tg) {
+    tg.ready();
+    tg.expand();
+  }
+
+  function go(id) {
+    document.querySelectorAll('.page').forEach(p =>
+      p.classList.toggle('active', p.id === id)
+    );
+    document.querySelectorAll('.nav button').forEach(b =>
+      b.classList.toggle(
+        'active',
+        b.dataset.page === id ||
+        (id === 'devices' && b.dataset.page === 'profile')
+      )
+    );
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  let plan = { price: 449, name: '3 месяца' };
+
+  function selectPlan(el, price, name) {
+    document.querySelectorAll('.price').forEach(p =>
+      p.classList.remove('selected')
+    );
+    el.classList.add('selected');
+    plan = { price, name };
+    document.getElementById('selectedPlan').textContent = name;
+    document.getElementById('selectedPrice').textContent =
+      price.toLocaleString('ru-RU') + ' ₽';
+  }
+
+  function demoPay() {
+    const msg = 'Тариф ' + plan.name + ' за ' + plan.price +
+      ' ₽. Реальная оплата пока не подключена.';
+    if (tg?.showAlert) tg.showAlert(msg);
+    else alert(msg);
+  }
+
+  function shareReferral() {
+    const text = 'Присоединяйся к ippi VPN!';
+    if (tg?.openTelegramLink) {
+      tg.openTelegramLink(
+        'https://t.me/share/url?url=&text=' + encodeURIComponent(text)
+      );
+    } else if (navigator.share) {
+      navigator.share({ text });
+    } else {
+      alert(text);
+    }
+  }
+
+  function supportClick(e) {
+    e.preventDefault();
+    const msg = 'Контакт поддержки пока настраивается.';
+    if (tg?.showAlert) tg.showAlert(msg);
+    else alert(msg);
+    return false;
+  }
+
+  const planNames = {
+    '1_month': '1 месяц',
+    '3_months': '3 месяца',
+    '6_months': '6 месяцев',
+    '12_months': '12 месяцев'
+  };
+
+  function formatDate(value) {
+    if (!value) return 'Дата не указана';
+    return new Date(value).toLocaleDateString('ru-RU', {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric'
+    });
+  }
+
+  function showSubscription(subscription) {
+    const card = document.querySelector('#home .card');
+    const status = card.querySelector('.status');
+    const pill = card.querySelector('.pill');
+    const name = card.querySelector('.plan');
+    const expiry = card.querySelector('.expiry');
+    const progress = card.querySelector('.progress-wrap');
+
+    if (!subscription) {
+      status.innerHTML = '<i class="dot" style="background:#9292a3"></i> Нет подписки';
+      pill.textContent = 'FREE';
+      name.textContent = 'Нет активного тарифа';
+      expiry.textContent = 'Выбери тариф, чтобы подключить VPN';
+      progress.style.display = 'none';
+      return;
+    }
+
+    const expired = subscription.expires_at &&
+      new Date(subscription.expires_at) <= new Date();
+
+    const active = subscription.status === 'active' && !expired;
+
+    status.innerHTML = active
+      ? '<i class="dot"></i> Подписка активна'
+      : '<i class="dot" style="background:#e5a34b"></i> Подписка не активна';
+
+    pill.textContent = active ? 'PREMIUM' : 'EXPIRED';
+    name.textContent = planNames[subscription.plan_code] || 'Подписка';
+    expiry.textContent = subscription.expires_at
+      ? 'Действует до ' + formatDate(subscription.expires_at)
+      : 'Дата окончания пока не указана';
+
+    progress.style.display = 'none';
+  }
+
+  function showPayments(payments) {
+    const section = document.getElementById('payments');
+
+    section.querySelectorAll('.list-item, .empty').forEach(el =>
+      el.remove()
+    );
+
+    const notice = section.querySelector('.notice');
+    if (notice) notice.remove();
+
+    if (!payments || payments.length === 0) {
+      const empty = document.createElement('div');
+      empty.className = 'empty';
+      empty.textContent = 'Платежей пока нет.';
+      section.appendChild(empty);
+      return;
+    }
+
+    payments.forEach(payment => {
+      const item = document.createElement('div');
+      item.className = 'list-item';
+
+      const row = document.createElement('div');
+      row.className = 'row';
+
+      const title = document.createElement('strong');
+      title.textContent = 'Оплата ippi VPN';
+
+      const state = document.createElement('span');
+      state.textContent = payment.status === 'paid'
+        ? 'Успешно'
+        : payment.status === 'pending'
+          ? 'Ожидает оплаты'
+          : payment.status;
+
+      if (payment.status === 'paid') {
+        state.style.color = 'var(--green)';
+      }
+
+      const date = document.createElement('small');
+      date.textContent =
+        formatDate(payment.created_at) + ' · ' +
+        Number(payment.amount).toLocaleString('ru-RU') + ' ' +
+        (payment.currency || 'RUB');
+
+      row.append(title, state);
+      item.append(row, date);
+      section.appendChild(item);
+    });
+  }
+
+  async function loadAccount() {
+    const status = document.querySelector('#home .card .status');
+    status.textContent = 'Загружаем аккаунт...';
+
+    if (!tg?.initData) {
+      status.textContent = 'Открой приложение через Telegram';
+      return;
+    }
+
+    try {
+      const response = await fetch('/api/me', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ initData: tg.initData })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Не удалось загрузить аккаунт');
+      }
+
+      const user = data.user;
+      const first = user.first_name || '';
+
+      document.getElementById('helloName').textContent =
+        first ? ', ' + first : '';
+
+      document.getElementById('avatar').textContent =
+        first ? first[0].toUpperCase() : 'D';
+
+      document.getElementById('userName').textContent =
+        first || user.username || 'Пользователь Telegram';
+
+      document.getElementById('userId').textContent =
+        'Telegram ID: ' + user.telegram_id;
+
+      showSubscription(data.subscription);
+      showPayments(data.payments);
+
+    } catch (error) {
+      console.error('Account loading error:', error);
+      status.textContent = 'Не удалось загрузить аккаунт';
+      if (tg?.showAlert) {
+        tg.showAlert(error.message);
+      }
+    }
+  }
+
+  loadAccount();
+</script>
     <section class="page" id="profile">
       <p class="eyebrow">Аккаунт</p><h1 class="heading">Профиль</h1><p class="sub">Настройки аккаунта ippi VPN.</p>
       <div class="list-item"><strong id="userName">Пользователь Telegram</strong><small id="userId">Telegram ID будет доступен после запуска внутри Telegram</small></div>
@@ -93,44 +308,6 @@
     <button data-page="profile" onclick="go('profile')"><b>☻</b>Профиль</button>
   </nav>
 </div>
-<script>
-  const tg = window.Telegram?.WebApp;
-  if (tg) {
-    tg.ready(); tg.expand();
-    const u = tg.initDataUnsafe?.user;
-    if (u) {
-      const first = u.first_name || '';
-      document.getElementById('helloName').textContent = first ? ', ' + first : '';
-      document.getElementById('avatar').textContent = first ? first[0].toUpperCase() : 'D';
-      document.getElementById('userName').textContent = [u.first_name,u.last_name].filter(Boolean).join(' ') || 'Пользователь Telegram';
-      document.getElementById('userId').textContent = 'Telegram ID: ' + u.id;
-    }
-  }
-  function go(id){
-    document.querySelectorAll('.page').forEach(p=>p.classList.toggle('active',p.id===id));
-    document.querySelectorAll('.nav button').forEach(b=>b.classList.toggle('active',b.dataset.page===id || (id==='devices' && b.dataset.page==='profile')));
-    window.scrollTo({top:0,behavior:'smooth'});
-  }
-  let plan={price:449,name:'3 месяца'};
-  function selectPlan(el,price,name){
-    document.querySelectorAll('.price').forEach(p=>p.classList.remove('selected'));el.classList.add('selected');
-    plan={price,name};document.getElementById('selectedPlan').textContent=name;document.getElementById('selectedPrice').textContent=price.toLocaleString('ru-RU')+' ₽';
-  }
-  function demoPay(){
-    const msg='Вы выбрали тариф '+plan.name+' за '+plan.price+' ₽. Это демонстрация: платёжная система ещё не подключена.';
-    if(tg?.showAlert) tg.showAlert(msg); else alert(msg);
-  }
-  function shareReferral(){
-    const text='Присоединяйся к ippi VPN!';
-    if(tg?.openTelegramLink) tg.openTelegramLink('https://t.me/share/url?url=&text='+encodeURIComponent(text));
-    else if(navigator.share) navigator.share({text}); else alert(text);
-  }
-  function supportClick(e){
-    e.preventDefault();
-    const msg='Укажи username поддержки в коде перед запуском.';
-    if(tg?.showAlert) tg.showAlert(msg); else alert(msg);
-    return false;
-  }
-</script>
+
 </body>
 </html>
