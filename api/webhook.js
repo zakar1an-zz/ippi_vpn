@@ -1,6 +1,17 @@
 
 const TELEGRAM_API = "https://api.telegram.org";
 const SUPPORT_URL = "https://t.me/ippi_support";
+const APP_URL = "https://ippivpn.vercel.app";
+
+// Фотографии
+const WELCOME_IMAGE =
+  "https://raw.githubusercontent.com/zakar1an-zz/ippi_vpn/main/C9C0480A-98A0-45E6-B32D-651A9B908DEE.png";
+
+// Одна фотография для главного меню и личного кабинета
+const MENU_IMAGE =
+  "https://raw.githubusercontent.com/zakar1an-zz/ippi_vpn/main/8768BF5F-3C16-4306-8D79-1BA0E4039F3D.png";
+
+const CABINET_IMAGE = MENU_IMAGE;
 
 async function telegram(method, payload) {
   const token = process.env.BOT_TOKEN;
@@ -16,12 +27,18 @@ async function telegram(method, payload) {
   );
 
   const data = await response.json();
-  if (!data.ok) throw new Error(data.description);
+
+  if (!data.ok) {
+    throw new Error(data.description || "Telegram API error");
+  }
+
   return data;
 }
 
+// Supabase
 function supabaseHeaders() {
   const key = process.env.SUPABASE_SECRET_KEY;
+
   if (!key || !process.env.SUPABASE_URL) {
     throw new Error("Supabase environment variables missing");
   }
@@ -71,6 +88,7 @@ async function getProfile(telegramId) {
   }
 
   const users = await userResponse.json();
+
   if (!users.length) return null;
 
   const user = users[0];
@@ -92,6 +110,7 @@ async function getProfile(telegramId) {
   };
 }
 
+// Форматирование
 function formatDate(date) {
   return new Intl.DateTimeFormat("ru-RU", {
     timeZone: "Europe/Moscow",
@@ -114,98 +133,12 @@ function planName(code) {
   return names[code] || code;
 }
 
-async function sendSubscription(chatId, telegramId) {
-  const profile = await getProfile(telegramId);
-
-  if (!profile) {
-    await telegram("sendMessage", {
-      chat_id: chatId,
-      text: "Аккаунт пока не найден. Нажми /start, чтобы зарегистрироваться."
-    });
-    return;
-  }
-
-  const user = profile.user;
-  const sub = profile.subscription;
-
-  const name = user.first_name || "Не указано";
-  const account = user.username ? `@${user.username}` : "Имя пользователя не указано";
-
-  let subscriptionText;
-
-  if (sub && sub.expires_at && new Date(sub.expires_at) > new Date()) {
-    const remaining = Math.ceil(
-      (new Date(sub.expires_at) - Date.now()) / 86400000
-    );
-
-    subscriptionText =
-      `✅ Статус: Активна\n` +
-      `🎁 Тариф: ${planName(sub.plan_code)}\n` +
-      `📅 Действует до: ${formatDate(sub.expires_at)} (МСК)\n` +
-      `⏳ Осталось дней: ${remaining}`;
-  } else {
-    subscriptionText =
-      "❌ Активной подписки нет.\n\n" +
-      "Выбери тариф в приложении ippi VPN.";
-  }
-
-  await telegram("sendMessage", {
-    chat_id: chatId,
-    text:
-      "👑 МОЙ ПРОФИЛЬ\n\n" +
-      `📝 Имя: ${name}\n` +
-      `🆔 Telegram ID: ${user.telegram_id}\n` +
-      `🔗 Аккаунт: ${account}\n` +
-      "✅ Аккаунт привязан\n\n" +
-      "🔑 МОЯ ПОДПИСКА\n" +
-      subscriptionText,
-    reply_markup: {
-      inline_keyboard: [
-        [{
-          text: "Открыть ippi VPN",
-          web_app: { url: "https://ippivpn.vercel.app" }
-        }],
-        [{
-          text: "Ключ и устройства",
-          callback_data: "key_devices"
-        }],
-        [{
-          text: "Главное меню",
-          callback_data: "main_menu"
-        }]
-      ]
-    }
-  });
-}
-
-async function sendKeyDevices(chatId) {
-  await telegram("sendMessage", {
-    chat_id: chatId,
-    text:
-      "🔑 КЛЮЧ И УСТРОЙСТВА\n\n" +
-      "🔐 VPN-ключ: пока не создан.\n" +
-      "📱 Устройства: настройка ещё не подключена.\n\n" +
-      "Эти данные появятся после настройки VPN-серверов и автоматической выдачи ключей.",
-    reply_markup: {
-      inline_keyboard: [
-        [{
-          text: "Моя подписка",
-          callback_data: "subscription"
-        }],
-        [{
-          text: "Главное меню",
-          callback_data: "main_menu"
-        }]
-      ]
-    }
-  });
-}
-
-const keyboard = {
+// Кнопки
+const mainKeyboard = {
   inline_keyboard: [
     [{
       text: "Открыть ippi VPN",
-      web_app: { url: "https://ippivpn.vercel.app" }
+      web_app: { url: APP_URL }
     }],
     [
       { text: "Тарифы", callback_data: "tariffs" },
@@ -221,29 +154,248 @@ const keyboard = {
   ]
 };
 
-const supportKeyboard = {
+const backKeyboard = {
   inline_keyboard: [
     [{
-      text: "Написать в поддержку",
-      url: SUPPORT_URL
-    }],
-    [{
-      text: "В главное меню",
+      text: "← Главное меню",
       callback_data: "main_menu"
     }]
   ]
 };
 
-async function sendSupport(chatId) {
-  await telegram("sendMessage", {
+// Показать экран в одном сообщении
+async function showScreen(chatId, message, photo, caption, keyboard) {
+  const media = {
+    type: "photo",
+    media: photo,
+    caption
+  };
+
+  // Если сообщение уже содержит фотографию — заменяем её
+  if (message && message.photo) {
+    try {
+      await telegram("editMessageMedia", {
+        chat_id: chatId,
+        message_id: message.message_id,
+        media,
+        reply_markup: keyboard
+      });
+      return;
+    } catch (error) {
+      if (error.message.includes("message is not modified")) {
+        return;
+      }
+      throw error;
+    }
+  }
+
+  // Если старое сообщение было текстовым —
+  // удаляем его и отправляем фотографию
+  if (message) {
+    try {
+      await telegram("deleteMessage", {
+        chat_id: chatId,
+        message_id: message.message_id
+      });
+    } catch (error) {
+      console.error("Could not delete old message:", error.message);
+    }
+  }
+
+  await telegram("sendPhoto", {
     chat_id: chatId,
-    text:
-      "Поддержка ippi VPN\n\n" +
-      "Если у тебя возникли вопросы по подключению, оплате или подписке — напиши нам. Мы постараемся помочь.",
-    reply_markup: supportKeyboard
+    photo,
+    caption,
+    reply_markup: keyboard
   });
 }
 
+// Главное меню
+async function showMainMenu(chatId, message = null) {
+  await showScreen(
+    chatId,
+    message,
+    MENU_IMAGE,
+    "🏠 ГЛАВНОЕ МЕНЮ ippi VPN\n\n" +
+    "Выбирай нужный раздел:",
+    mainKeyboard
+  );
+}
+
+// Приветствие
+async function showWelcome(chatId) {
+  await telegram("sendPhoto", {
+    chat_id: chatId,
+    photo: WELCOME_IMAGE,
+    caption:
+      "👋 Добро пожаловать в ippi VPN!\n\n" +
+      "Твой доступ к удобному и защищённому интернету.\n\n" +
+      "Выбирай нужный раздел ниже:",
+    reply_markup: mainKeyboard
+  });
+}
+
+// Личный кабинет и подписка
+async function showSubscription(chatId, telegramId, message = null) {
+  const profile = await getProfile(telegramId);
+
+  if (!profile) {
+    await showScreen(
+      chatId,
+      message,
+      CABINET_IMAGE,
+      "Аккаунт пока не найден.\n\nНажми /start, чтобы зарегистрироваться.",
+      backKeyboard
+    );
+    return;
+  }
+
+  const user = profile.user;
+  const sub = profile.subscription;
+
+  const name = user.first_name || "Не указано";
+  const account = user.username
+    ? `@${user.username}`
+    : "Имя пользователя не указано";
+
+  let subscriptionText;
+
+  if (
+    sub &&
+    sub.expires_at &&
+    new Date(sub.expires_at) > new Date()
+  ) {
+    const remaining = Math.ceil(
+      (new Date(sub.expires_at).getTime() - Date.now()) / 86400000
+    );
+
+    subscriptionText =
+      "✅ Статус: Активна\n" +
+      `🎁 Тариф: ${planName(sub.plan_code)}\n` +
+      `📅 Действует до: ${formatDate(sub.expires_at)} (МСК)\n` +
+      `⏳ Осталось дней: ${remaining}`;
+  } else {
+    subscriptionText =
+      "❌ Активной подписки нет.\n\n" +
+      "Выбери тариф в приложении ippi VPN.";
+  }
+
+  await showScreen(
+    chatId,
+    message,
+    CABINET_IMAGE,
+    "👑 МОЙ ПРОФИЛЬ\n\n" +
+    `📝 Имя: ${name}\n` +
+    `🆔 Telegram ID: ${user.telegram_id}\n` +
+    `🔗 Аккаунт: ${account}\n` +
+    "✅ Аккаунт привязан\n\n" +
+    "🔑 МОЯ ПОДПИСКА\n" +
+    subscriptionText,
+    {
+      inline_keyboard: [
+        [{
+          text: "Открыть ippi VPN",
+          web_app: { url: APP_URL }
+        }],
+        [{
+          text: "Ключ и устройства",
+          callback_data: "key_devices"
+        }],
+        [{
+          text: "← Главное меню",
+          callback_data: "main_menu"
+        }]
+      ]
+    }
+  );
+}
+
+// Ключ и устройства
+async function showKeyDevices(chatId, message = null) {
+  await showScreen(
+    chatId,
+    message,
+    CABINET_IMAGE,
+    "🔑 КЛЮЧ И УСТРОЙСТВА\n\n" +
+    "🔐 VPN-ключ: пока не создан.\n" +
+    "📱 Устройства: настройка ещё не подключена.\n\n" +
+    "Эти данные появятся после настройки VPN-серверов и автоматической выдачи ключей.",
+    {
+      inline_keyboard: [
+        [{
+          text: "Моя подписка",
+          callback_data: "subscription"
+        }],
+        [{
+          text: "← Главное меню",
+          callback_data: "main_menu"
+        }]
+      ]
+    }
+  );
+}
+
+// Тарифы
+async function showTariffs(chatId, message = null) {
+  await showScreen(
+    chatId,
+    message,
+    MENU_IMAGE,
+    "💎 ТАРИФЫ ippi VPN\n\n" +
+    "Выбери подходящий тариф и оформи подписку в приложении.",
+    {
+      inline_keyboard: [
+        [{
+          text: "Посмотреть тарифы",
+          web_app: { url: APP_URL }
+        }],
+        [{
+          text: "← Главное меню",
+          callback_data: "main_menu"
+        }]
+      ]
+    }
+  );
+}
+
+// Поддержка
+async function showSupport(chatId, message = null) {
+  await showScreen(
+    chatId,
+    message,
+    MENU_IMAGE,
+    "🎧 ПОДДЕРЖКА ippi VPN\n\n" +
+    "Возникли вопросы по подключению, оплате или подписке?\n\n" +
+    "Напиши нам — постараемся помочь.",
+    {
+      inline_keyboard: [
+        [{
+          text: "Написать в поддержку",
+          url: SUPPORT_URL
+        }],
+        [{
+          text: "← Главное меню",
+          callback_data: "main_menu"
+        }]
+      ]
+    }
+  );
+}
+
+// Реферальная программа
+async function showReferral(chatId, message = null) {
+  await showScreen(
+    chatId,
+    message,
+    MENU_IMAGE,
+    "🎁 РЕФЕРАЛЬНАЯ ПРОГРАММА\n\n" +
+    "Приглашай друзей и получай бонусы за их подписки.\n\n" +
+    "Реферальная программа скоро появится.",
+    backKeyboard
+  );
+}
+
+// Обработка запросов
 module.exports = async (req, res) => {
   if (req.method !== "POST") {
     return res.status(405).send("Method Not Allowed");
@@ -252,72 +404,67 @@ module.exports = async (req, res) => {
   try {
     const update = req.body || {};
 
+    // Сообщения и команды
     if (update.message) {
       const chatId = update.message.chat.id;
       const telegramUser = update.message.from;
       const command = (update.message.text || "").split(" ")[0];
 
       if (command === "/start") {
-        if (telegramUser) await saveUser(telegramUser);
+        if (telegramUser) {
+          await saveUser(telegramUser);
+        }
 
-        await telegram("sendMessage", {
-          chat_id: chatId,
-          text:
-            "👋 Добро пожаловать в ippi VPN!\n\n" +
-            "Твой доступ к удобному и защищённому интернету.\n\n" +
-            "Выбирай нужный раздел ниже:",
-          reply_markup: keyboard
-        });
+        await showWelcome(chatId);
+
       } else if (command === "/support") {
-        await sendSupport(chatId);
+        await showSupport(chatId);
+
       } else if (command === "/subscription") {
-        await sendSubscription(chatId, telegramUser.id);
+        await showSubscription(chatId, telegramUser.id);
+
       } else {
-        await telegram("sendMessage", {
-          chat_id: chatId,
-          text: "Выбери нужный раздел в меню ippi VPN.",
-          reply_markup: keyboard
-        });
+        await showMainMenu(chatId);
       }
     }
 
+    // Нажатия на кнопки
     if (update.callback_query) {
       const query = update.callback_query;
       const chatId = query.message.chat.id;
+      const message = query.message;
 
       await telegram("answerCallbackQuery", {
         callback_query_id: query.id
       });
 
-      if (query.data === "support") {
-        await sendSupport(chatId);
-      } else if (query.data === "subscription") {
-        await sendSubscription(chatId, query.from.id);
-      } else if (query.data === "key_devices") {
-        await sendKeyDevices(chatId);
-      } else if (query.data === "main_menu") {
-        await telegram("sendMessage", {
-          chat_id: chatId,
-          text: "Главное меню ippi VPN:",
-          reply_markup: keyboard
-        });
-      } else {
-        const messages = {
-          tariffs: "Наши тарифы доступны в приложении ippi VPN.",
-          referral: "Реферальная программа скоро появится."
-        };
+      if (query.data === "main_menu") {
+        await showMainMenu(chatId, message);
 
-        await telegram("sendMessage", {
-          chat_id: chatId,
-          text: messages[query.data] || "Выбери раздел меню.",
-          reply_markup: keyboard
-        });
+      } else if (query.data === "subscription") {
+        await showSubscription(chatId, query.from.id, message);
+
+      } else if (query.data === "key_devices") {
+        await showKeyDevices(chatId, message);
+
+      } else if (query.data === "tariffs") {
+        await showTariffs(chatId, message);
+
+      } else if (query.data === "support") {
+        await showSupport(chatId, message);
+
+      } else if (query.data === "referral") {
+        await showReferral(chatId, message);
       }
     }
 
     return res.status(200).json({ ok: true });
+
   } catch (error) {
-    console.error(error);
-    return res.status(500).json({ ok: false });
+    console.error("Webhook error:", error);
+
+    return res.status(500).json({
+      ok: false
+    });
   }
 };
