@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -6,6 +7,7 @@
   <meta name="theme-color" content="#050b16" />
   <title>ippi VPN</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
   <style>
     :root {
       --bg: #050b16;
@@ -208,6 +210,7 @@
     }
 
     .list-item strong { font-size: 14px; }
+
     .list-item small {
       display: block;
       color: var(--muted);
@@ -248,7 +251,12 @@
       white-space: nowrap;
     }
 
-    .notice { font-size: 12px; line-height: 1.5; color: var(--muted); margin-top: 12px; }
+    .notice {
+      font-size: 12px;
+      line-height: 1.5;
+      color: var(--muted);
+      margin-top: 12px;
+    }
 
     .empty {
       padding: 24px;
@@ -272,12 +280,67 @@
       background: #10243c;
     }
 
+    .ref-stats {
+      background: #0a1b30;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 16px;
+      margin: 16px 0;
+    }
+
+    .ref-count {
+      font-size: 30px;
+      font-weight: 800;
+      color: #62c3ff;
+      margin-top: 5px;
+    }
+
+    .ref-link {
+      display: block;
+      width: 100%;
+      padding: 13px;
+      margin-top: 12px;
+      border-radius: 12px;
+      background: #071426;
+      border: 1px solid rgba(104, 174, 255, .2);
+      color: #9bd9ff;
+      font-size: 12px;
+      line-height: 1.5;
+      overflow-wrap: anywhere;
+      user-select: text;
+    }
+
+    .ref-buttons {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 9px;
+      margin-top: 12px;
+    }
+
+    .ref-buttons button {
+      min-width: 0;
+      padding: 13px 8px;
+      border-radius: 13px;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .ref-share {
+      background: linear-gradient(100deg, #0879d9, #28b5ff);
+    }
+
+    .ref-copy {
+      background: #14243b;
+      border: 1px solid var(--line);
+    }
+
     @media (min-width: 520px) {
       body { padding-top: 12px; }
       .app { padding-top: 25px; }
     }
   </style>
 </head>
+
 <body>
 <div class="app">
   <header class="top">
@@ -379,16 +442,48 @@
       </div>
 
       <h2 class="section-title">Реферальная программа</h2>
+
       <div class="card">
         <div class="plan" style="font-size:20px">Приглашай друзей</div>
-        <p class="notice">Реферальная программа готовится к запуску.</p>
-        <button class="secondary" style="width:100%;margin-top:12px" onclick="shareReferral()">
-          Поделиться ippi VPN
-        </button>
+        <p class="notice">
+          Поделись своей ссылкой. Когда друг впервые оплатит подписку,
+          ты получишь 5 бесплатных дней.
+        </p>
+
+        <div class="ref-stats">
+          <div class="muted" style="font-size:12px">Твои приглашённые друзья</div>
+          <div class="ref-count" id="refCount">—</div>
+          <div class="notice" style="margin-top:4px">
+            Учитываются пользователи, которые впервые запустили бота по твоей ссылке.
+          </div>
+        </div>
+
+        <div class="muted" style="font-size:12px">Твоя персональная ссылка</div>
+        <div class="ref-link" id="refLink">Загружаем ссылку...</div>
+
+        <div class="ref-buttons">
+          <button class="ref-copy" id="copyRefButton" onclick="copyReferral()">
+            Скопировать
+          </button>
+          <button class="ref-share" id="shareRefButton" onclick="shareReferral()">
+            Поделиться ↗
+          </button>
+        </div>
+
+        <p class="notice">
+          Награда: 5 бесплатных дней за первую успешную оплату приглашённого друга.
+          Максимум — 15 бонусных дней за календарный месяц.
+        </p>
+        <p class="notice">
+          Бонусные дни пока отображаются как условия программы и будут начисляться
+          после подключения автоматического подтверждения реферальных оплат.
+        </p>
       </div>
 
       <h2 class="section-title">Поддержка</h2>
-      <a class="support" href="#" onclick="return supportClick(event)">Написать в поддержку ↗</a>
+      <a class="support" href="#" onclick="return supportClick(event)">
+        Написать в поддержку ↗
+      </a>
     </section>
   </main>
 
@@ -416,6 +511,15 @@
   };
 
   let plan = { price: 449, name: '3 месяца' };
+  let referralLink = '';
+
+  function showMessage(message) {
+    if (tg?.showAlert) {
+      tg.showAlert(message);
+    } else {
+      window.alert(message);
+    }
+  }
 
   function go(id) {
     document.querySelectorAll('.page').forEach(page => {
@@ -544,6 +648,73 @@
     });
   }
 
+  function showReferral(referral) {
+    const linkElement = document.getElementById('refLink');
+    const countElement = document.getElementById('refCount');
+
+    if (!referral || !referral.link) {
+      referralLink = '';
+      linkElement.textContent = 'Не удалось получить реферальную ссылку';
+      countElement.textContent = '—';
+      return;
+    }
+
+    referralLink = referral.link;
+    linkElement.textContent = referralLink;
+    countElement.textContent = Number(referral.count || 0).toLocaleString('ru-RU');
+  }
+
+  async function copyReferral() {
+    if (!referralLink) {
+      showMessage('Реферальная ссылка ещё загружается.');
+      return;
+    }
+
+    try {
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(referralLink);
+      } else {
+        const textarea = document.createElement('textarea');
+        textarea.value = referralLink;
+        textarea.style.position = 'fixed';
+        textarea.style.opacity = '0';
+        document.body.appendChild(textarea);
+        textarea.select();
+
+        const copied = document.execCommand('copy');
+        textarea.remove();
+
+        if (!copied) throw new Error('Copy failed');
+      }
+
+      showMessage('Реферальная ссылка скопирована!');
+    } catch (error) {
+      console.error('Copy referral error:', error);
+      showMessage('Не удалось скопировать ссылку. Попробуй поделиться через Telegram.');
+    }
+  }
+
+  function shareReferral() {
+    if (!referralLink) {
+      showMessage('Реферальная ссылка ещё загружается.');
+      return;
+    }
+
+    const shareText = 'Присоединяйся к ippi VPN!';
+
+    const shareUrl =
+      'https://t.me/share/url?url=' +
+      encodeURIComponent(referralLink) +
+      '&text=' +
+      encodeURIComponent(shareText);
+
+    if (tg?.openTelegramLink) {
+      tg.openTelegramLink(shareUrl);
+    } else {
+      window.open(shareUrl, '_blank');
+    }
+  }
+
   async function loadAccount() {
     const status = document.getElementById('subscriptionStatus');
 
@@ -553,6 +724,7 @@
       document.getElementById('subscriptionExpiry').textContent =
         'Запусти Mini App через бота ippi VPN';
       showPayments([]);
+      showReferral(null);
       return;
     }
 
@@ -586,20 +758,24 @@
 
       showSubscription(data.subscription || null);
       showPayments(data.payments || []);
+      showReferral(data.referral || null);
+
     } catch (error) {
       console.error('Account loading error:', error);
+
       status.textContent = 'Не удалось загрузить аккаунт';
       document.getElementById('subscriptionPlan').textContent = 'Ошибка загрузки';
       document.getElementById('subscriptionExpiry').textContent =
         'Проверь подключение и попробуй открыть приложение снова';
+
       showPayments([]);
+      showReferral(null);
     }
   }
 
   async function demoPay() {
     if (!tg?.initData) {
-      if (tg?.showAlert) tg.showAlert('Открой приложение через Telegram');
-      else alert('Открой приложение через Telegram');
+      showMessage('Открой приложение через Telegram');
       return;
     }
 
@@ -611,8 +787,9 @@
     };
 
     const planCode = planCodes[plan.name];
+
     if (!planCode) {
-      if (tg.showAlert) tg.showAlert('Не удалось определить тариф');
+      showMessage('Не удалось определить тариф');
       return;
     }
 
@@ -657,41 +834,29 @@
       }
 
       tg.openLink(data.confirmationUrl);
+
     } catch (error) {
       console.error('Payment creation error:', error);
-      if (tg.showAlert) tg.showAlert(error.message);
-      else alert(error.message);
+      showMessage(error.message);
     } finally {
       payButton.disabled = false;
       payButton.textContent = 'Перейти к оплате';
     }
   }
 
-  function shareReferral() {
-    const shareText = 'Присоединяйся к ippi VPN!';
-    const shareUrl = 'https://t.me/share/url?url=' +
-      encodeURIComponent('https://t.me/') +
-      '&text=' + encodeURIComponent(shareText);
+  function supportClick(event) {
+    event.preventDefault();
+
+    const supportUrl = 'https://t.me/ippi_support';
 
     if (tg?.openTelegramLink) {
-      tg.openTelegramLink(shareUrl);
+      tg.openTelegramLink(supportUrl);
     } else {
-      window.alert('Реферальная ссылка ещё не настроена.');
+      window.open(supportUrl, '_blank');
     }
+
+    return false;
   }
-
-  function supportClick(event) {
-  event.preventDefault();
-  const supportUrl = 'https://t.me/ippi_support';
-
-  if (tg?.openTelegramLink) {
-    tg.openTelegramLink(supportUrl);
-  } else {
-    window.open(supportUrl, '_blank');
-  }
-
-  return false;
-}
 
   loadAccount();
 </script>
