@@ -405,16 +405,37 @@ button {
     <section class="page active" id="home">
       <p class="eyebrow">Личный кабинет</p><h1 class="heading">Привет<span id="helloName"></span> 👋</h1><p class="sub">Всё под контролем. Твоя приватность — наш приоритет.</p>
       <div class="card">
-        <div class="row"><div class="status"><i class="dot"></i> Подписка активна</div><span class="pill">PREMIUM</span></div>
-        <div class="plan">Premium</div><div class="expiry">Действует до 18 декабря 2026</div>
-        <div class="progress-wrap"><div class="progress-label"><span>Осталось времени</span><strong>23 дня</strong></div><div class="bar"><span></span></div></div>
-        <button class="primary" onclick="go('plans')">Продлить подписку&nbsp; →</button>
-      </div>
-      <div class="stats">
-        <div class="stat"><strong>2 <span class="muted">/ 5</span></strong><span>Устройства подключены</span></div>
-        <div class="stat"><strong>Безлимит</strong><span>Трафик</span></div>
-      </div>
-      <h2 class="section-title">Быстрый доступ</h2>
+  <div class="row">
+    <div class="status">
+      <i class="dot" style="background:#9292a3"></i>
+      Загружаем подписку...
+    </div>
+    <span class="pill">...</span>
+  </div>
+
+  <div class="plan">Проверяем данные</div>
+  <div class="expiry">Пожалуйста, подожди</div>
+
+  <div class="progress-wrap" style="display:none">
+    <div class="progress-label">
+      <span>Осталось времени</span>
+      <strong></strong>
+    </div>
+    <div class="bar"><span></span></div>
+  </div>
+
+  <button class="primary" onclick="go('plans')">
+    Выбрать тариф →
+  </button>
+</div>
+
+<div class="list-item row" onclick="go('payments')">
+  <div>
+    <strong>История платежей</strong>
+    <small>Все покупки и продления</small>
+  </div>
+  <span>›</span>
+</div>
       <div class="list-item row" onclick="go('devices')"><div><strong>Мои устройства</strong><small>Управление подключениями</small></div><span>›</span></div>
       <div class="list-item row" onclick="go('payments')"><div><strong>История платежей</strong><small>Все покупки и продления</small></div><span>›</span></div>
     </section>
