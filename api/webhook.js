@@ -1,5 +1,6 @@
 
 const TELEGRAM_API = "https://api.telegram.org";
+const SUPPORT_URL = "https://t.me/ippi_support";
 
 async function telegram(method, payload) {
   const token = process.env.BOT_TOKEN;
@@ -68,6 +69,29 @@ const keyboard = {
   ]
 };
 
+const supportKeyboard = {
+  inline_keyboard: [
+    [{
+      text: "Написать в поддержку",
+      url: SUPPORT_URL
+    }],
+    [{
+      text: "В главное меню",
+      callback_data: "main_menu"
+    }]
+  ]
+};
+
+async function sendSupport(chatId) {
+  await telegram("sendMessage", {
+    chat_id: chatId,
+    text:
+      "Поддержка ippi VPN\n\n" +
+      "Если у тебя возникли вопросы по подключению, оплате или подписке — напиши нам. Мы постараемся помочь.",
+    reply_markup: supportKeyboard
+  });
+}
+
 module.exports = async (req, res) => {
   if (req.method !== "POST") {
     return res.status(405).send("Method Not Allowed");
@@ -93,6 +117,8 @@ module.exports = async (req, res) => {
             "Выбирай нужный раздел ниже:",
           reply_markup: keyboard
         });
+      } else if (command === "/support") {
+        await sendSupport(chatId);
       } else {
         await telegram("sendMessage", {
           chat_id: chatId,
@@ -104,22 +130,33 @@ module.exports = async (req, res) => {
 
     if (update.callback_query) {
       const query = update.callback_query;
-      const messages = {
-        tariffs: "Наши тарифы доступны в приложении ippi VPN.",
-        subscription: "Управление подпиской скоро появится.",
-        referral: "Реферальная программа скоро появится.",
-        support: "Раздел поддержки скоро появится."
-      };
+      const chatId = query.message.chat.id;
 
       await telegram("answerCallbackQuery", {
         callback_query_id: query.id
       });
 
-      await telegram("sendMessage", {
-        chat_id: query.message.chat.id,
-        text: messages[query.data] || "Выбери раздел меню.",
-        reply_markup: keyboard
-      });
+      if (query.data === "support") {
+        await sendSupport(chatId);
+      } else if (query.data === "main_menu") {
+        await telegram("sendMessage", {
+          chat_id: chatId,
+          text: "Главное меню ippi VPN:",
+          reply_markup: keyboard
+        });
+      } else {
+        const messages = {
+          tariffs: "Наши тарифы доступны в приложении ippi VPN.",
+          subscription: "Управление подпиской скоро появится.",
+          referral: "Реферальная программа скоро появится."
+        };
+
+        await telegram("sendMessage", {
+          chat_id: chatId,
+          text: messages[query.data] || "Выбери раздел меню.",
+          reply_markup: keyboard
+        });
+      }
     }
 
     return res.status(200).json({ ok: true });
