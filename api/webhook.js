@@ -7,11 +7,11 @@ const APP_URL = "https://ippivpn.vercel.app";
 const WELCOME_IMAGE =
   "https://raw.githubusercontent.com/zakar1an-zz/ippi_vpn/main/C9C0480A-98A0-45E6-B32D-651A9B908DEE.png";
 
-// Одна фотография для главного меню и личного кабинета
-const MENU_IMAGE =
+const MAIN_IMAGE =
   "https://raw.githubusercontent.com/zakar1an-zz/ippi_vpn/main/8768BF5F-3C16-4306-8D79-1BA0E4039F3D.png";
 
-const CABINET_IMAGE = MENU_IMAGE;
+const CABINET_IMAGE =
+  "https://raw.githubusercontent.com/zakar1an-zz/ippi_vpn/main/5F56BBF4-3D2A-4045-95F5-97B794B7ABE8.png";
 
 async function telegram(method, payload) {
   const token = process.env.BOT_TOKEN;
@@ -88,7 +88,6 @@ async function getProfile(telegramId) {
   }
 
   const users = await userResponse.json();
-
   if (!users.length) return null;
 
   const user = users[0];
@@ -133,23 +132,30 @@ function planName(code) {
   return names[code] || code;
 }
 
-// Кнопки
+// Главное меню — без кнопки тарифов
 const mainKeyboard = {
   inline_keyboard: [
     [{
       text: "Открыть ippi VPN",
       web_app: { url: APP_URL }
     }],
+    [{
+      text: "Моя подписка",
+      callback_data: "subscription"
+    }],
+    [{
+      text: "Ключ и устройства",
+      callback_data: "key_devices"
+    }],
     [
-      { text: "Тарифы", callback_data: "tariffs" },
-      { text: "Моя подписка", callback_data: "subscription" }
-    ],
-    [
-      { text: "Ключ и устройства", callback_data: "key_devices" }
-    ],
-    [
-      { text: "Пригласить друга", callback_data: "referral" },
-      { text: "Поддержка", callback_data: "support" }
+      {
+        text: "Пригласить друга",
+        callback_data: "referral"
+      },
+      {
+        text: "Поддержка",
+        callback_data: "support"
+      }
     ]
   ]
 };
@@ -163,7 +169,7 @@ const backKeyboard = {
   ]
 };
 
-// Показать экран в одном сообщении
+// Переключение экранов в одном сообщении
 async function showScreen(chatId, message, photo, caption, keyboard) {
   const media = {
     type: "photo",
@@ -171,7 +177,6 @@ async function showScreen(chatId, message, photo, caption, keyboard) {
     caption
   };
 
-  // Если сообщение уже содержит фотографию — заменяем её
   if (message && message.photo) {
     try {
       await telegram("editMessageMedia", {
@@ -189,8 +194,6 @@ async function showScreen(chatId, message, photo, caption, keyboard) {
     }
   }
 
-  // Если старое сообщение было текстовым —
-  // удаляем его и отправляем фотографию
   if (message) {
     try {
       await telegram("deleteMessage", {
@@ -210,18 +213,6 @@ async function showScreen(chatId, message, photo, caption, keyboard) {
   });
 }
 
-// Главное меню
-async function showMainMenu(chatId, message = null) {
-  await showScreen(
-    chatId,
-    message,
-    MENU_IMAGE,
-    "🏠 ГЛАВНОЕ МЕНЮ ippi VPN\n\n" +
-    "Выбирай нужный раздел:",
-    mainKeyboard
-  );
-}
-
 // Приветствие
 async function showWelcome(chatId) {
   await telegram("sendPhoto", {
@@ -235,7 +226,19 @@ async function showWelcome(chatId) {
   });
 }
 
-// Личный кабинет и подписка
+// Главное меню — своя фотография
+async function showMainMenu(chatId, message = null) {
+  await showScreen(
+    chatId,
+    message,
+    MAIN_IMAGE,
+    "🏠 ГЛАВНОЕ МЕНЮ ippi VPN\n\n" +
+    "Выбирай нужный раздел:",
+    mainKeyboard
+  );
+}
+
+// Личный кабинет — отдельная фотография
 async function showSubscription(chatId, telegramId, message = null) {
   const profile = await getProfile(telegramId);
 
@@ -335,35 +338,12 @@ async function showKeyDevices(chatId, message = null) {
   );
 }
 
-// Тарифы
-async function showTariffs(chatId, message = null) {
-  await showScreen(
-    chatId,
-    message,
-    MENU_IMAGE,
-    "💎 ТАРИФЫ ippi VPN\n\n" +
-    "Выбери подходящий тариф и оформи подписку в приложении.",
-    {
-      inline_keyboard: [
-        [{
-          text: "Посмотреть тарифы",
-          web_app: { url: APP_URL }
-        }],
-        [{
-          text: "← Главное меню",
-          callback_data: "main_menu"
-        }]
-      ]
-    }
-  );
-}
-
 // Поддержка
 async function showSupport(chatId, message = null) {
   await showScreen(
     chatId,
     message,
-    MENU_IMAGE,
+    MAIN_IMAGE,
     "🎧 ПОДДЕРЖКА ippi VPN\n\n" +
     "Возникли вопросы по подключению, оплате или подписке?\n\n" +
     "Напиши нам — постараемся помочь.",
@@ -387,7 +367,7 @@ async function showReferral(chatId, message = null) {
   await showScreen(
     chatId,
     message,
-    MENU_IMAGE,
+    MAIN_IMAGE,
     "🎁 РЕФЕРАЛЬНАЯ ПРОГРАММА\n\n" +
     "Приглашай друзей и получай бонусы за их подписки.\n\n" +
     "Реферальная программа скоро появится.",
@@ -395,7 +375,7 @@ async function showReferral(chatId, message = null) {
   );
 }
 
-// Обработка запросов
+// Webhook
 module.exports = async (req, res) => {
   if (req.method !== "POST") {
     return res.status(405).send("Method Not Allowed");
@@ -404,7 +384,6 @@ module.exports = async (req, res) => {
   try {
     const update = req.body || {};
 
-    // Сообщения и команды
     if (update.message) {
       const chatId = update.message.chat.id;
       const telegramUser = update.message.from;
@@ -428,7 +407,6 @@ module.exports = async (req, res) => {
       }
     }
 
-    // Нажатия на кнопки
     if (update.callback_query) {
       const query = update.callback_query;
       const chatId = query.message.chat.id;
@@ -446,9 +424,6 @@ module.exports = async (req, res) => {
 
       } else if (query.data === "key_devices") {
         await showKeyDevices(chatId, message);
-
-      } else if (query.data === "tariffs") {
-        await showTariffs(chatId, message);
 
       } else if (query.data === "support") {
         await showSupport(chatId, message);
