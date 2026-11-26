@@ -111,12 +111,61 @@
       price.toLocaleString('ru-RU') + ' ₽';
   }
 
-  function demoPay() {
-    const msg = 'Тариф ' + plan.name + ' за ' + plan.price +
-      ' ₽. Реальная оплата пока не подключена.';
-    if (tg?.showAlert) tg.showAlert(msg);
-    else alert(msg);
+async function demoPay() {
+  if (!tg?.initData) {
+    alert('Открой приложение через Telegram');
+    return;
   }
+
+  const planCodes = {
+    '1 месяц': '1_month',
+    '3 месяца': '3_months',
+    '6 месяцев': '6_months',
+    '12 месяцев': '12_months'
+  };
+
+  const planCode = planCodes[plan.name];
+
+  if (!planCode) {
+    alert('Не удалось определить тариф');
+    return;
+  }
+
+  try {
+    if (tg.MainButton) {
+      tg.MainButton.showProgress();
+    }
+
+    const response = await fetch('/api/create-order', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        initData: tg.initData,
+        planCode
+      })
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.error || 'Ошибка создания заказа');
+    }
+
+    const message = 'Заказ создан! Тариф: ' + plan.name +
+      '. Сумма: ' + data.amount + ' ₽. Оплата пока не подключена.';
+
+    if (tg.showAlert) tg.showAlert(message);
+    else alert(message);
+
+  } catch (error) {
+    if (tg.showAlert) tg.showAlert(error.message);
+    else alert(error.message);
+  } finally {
+    if (tg.MainButton) {
+      tg.MainButton.hideProgress();
+    }
+  }
+}
 
   function shareReferral() {
     const text = 'Присоединяйся к ippi VPN!';
